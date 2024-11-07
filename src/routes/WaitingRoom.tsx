@@ -1,25 +1,31 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import Loader from "../components/Loader";
-import { redirect, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { checkRoomPassword } from "../services/api/apiService";
+import { QuizContext } from "../App";
 
 export default function WaitingRoom() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const quizContext = useContext(QuizContext);
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    // setLoading(true);
+    setLoading(true);
     const roomCode = e.target.roomCode.value;
-    const passcode = "1234";
+    const response = await checkRoomPassword(roomCode);
 
-    if (roomCode === passcode) {
-      setLoading(false);
-      navigate(`/room/${e.target.roomCode.value}`);
-    } else {
+    if (response == "Room not found") {
       setError(true);
       setLoading(false);
+    } else {
+      if (quizContext) {
+        quizContext.setQuiz(response[0]);
+      }
+      setLoading(false);
+      navigate(`/room/${e.target.roomCode.value}`);
     }
   };
 
@@ -54,7 +60,7 @@ export default function WaitingRoom() {
       {error && (
         <div
           role="alert"
-          className="alert alert-error"
+          className="alert alert-error max-w-lg"
           onClick={() => setError(false)}
         >
           <svg

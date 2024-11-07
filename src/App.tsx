@@ -6,24 +6,35 @@ import Room from "./routes/rooms/Room";
 import WaitingRoom from "./routes/WaitingRoom";
 import Navbar from "./components/Navbar";
 import Experiment from "./routes/rooms/Experiment";
+import { createContext, useState } from "react";
+import { Quiz } from "./utils/types";
+
+interface QuizContextType {
+  quiz: Quiz | null;
+  setQuiz: (quiz: Quiz | null) => void;
+}
+
+export const QuizContext = createContext<QuizContextType | null>(null);
 
 function App() {
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
   return (
     <>
       <Navbar />
-
-      <section className="min-h-container relative">
-        <Routes>
-          <Route
-            path="/admin/"
-            element={<Navigate to="/admin/quiz" replace />}
-          />
-          <Route path="/admin/:currentPath" element={<Admin />} />
-          <Route path="/*" element={<WaitingRoom />} />
-          <Route path="/room/:roomId" element={<Room />} />
-          <Route path="/room/:roomId/team/:teamId" element={<Experiment />} />
-        </Routes>
-      </section>
+      <QuizContext.Provider value={{ quiz, setQuiz }}>
+        <section className="min-h-container relative">
+          <Routes>
+            <Route
+              path="/admin/"
+              element={<Navigate to="/admin/quiz" replace />}
+            />
+            <Route path="/admin/:currentPath" element={<Admin />} />
+            <Route path="/*" element={<WaitingRoom />} />
+            <Route path="/room/:roomId" element={<Room />} />
+            <Route path="/room/:roomId/team/:teamId" element={<Experiment />} />
+          </Routes>
+        </section>
+      </QuizContext.Provider>
     </>
   );
 }

@@ -30,6 +30,14 @@ export interface Team {
   score: number;
   color: string;
 }
+export interface Quiz {
+  id: string;
+  name: string;
+  teams: Team[];
+  judge: Judge;
+  questions: Question[];
+  roomCode: string;
+}
 
 export interface Message {
   id: number;

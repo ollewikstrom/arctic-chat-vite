@@ -21,6 +21,23 @@ export const askQuestions = async (questions: Question[], team: Team) => {
   console.log(res);
 };
 
+export const checkRoomPassword = async (password: string) => {
+  const res = await fetch(
+    baseUrl + "/api/getQuizByPasscode?passcode=" + password,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  if (res.status === 200) {
+    const quiz = await res.json();
+    return quiz;
+  }
+  return "Room not found";
+};
+
 export const judgeAnswers = async (answers: Answer[]) => {
   //const res = await axios.post("http://localhost:7247/api/judge", answers);
   const res = await axios.post(baseUrl + "/api/judge", answers);
@@ -61,9 +78,13 @@ export const getAllAnswers = async () => {
 
 export const getTeamScores = async (question: Question, teams: Team[]) => {
   //const res = await axios.get("http://localhost:7247/api/getJudgements", {params: {"question": question}});
-  const res = await axios.get(baseUrl + "/api/getJudgements", {
-    params: { question: question },
-  });
+  const res = await fetch(baseUrl + "/api/getJudgements", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ question: question }),
+  }).then((response) => response.json());
 
   console.log(res);
   let updated = [...teams];
