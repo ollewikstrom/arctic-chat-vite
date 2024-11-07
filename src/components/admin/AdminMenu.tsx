@@ -80,6 +80,7 @@ export default function AdminMenu() {
             </NavLink>
           </li>
         </ul>
+        <div className="divider divider-secondary" />
       </nav>
     </>
   );

@@ -26,7 +26,6 @@ export default function Judges({ judges }: { judges: Judge[] }) {
           Skapa en ny domare
         </button>
       </div>
-      <div className="divider divider-secondary" />
       <ul className="flex flex-wrap w-full justify-center items-center gap-6">
         {judges.map((judge) => (
           <li key={judge.id}>

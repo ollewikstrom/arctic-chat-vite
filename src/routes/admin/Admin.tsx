@@ -6,9 +6,24 @@ import CreateQuiz from "./quiz/CreateQuiz";
 export default function Admin() {
   const { currentPath } = useParams();
   const judges = [
-    { id: 1, name: "Domare 1", demands: ["Kräver kaffe", "Kräver te"] },
-    { id: 2, name: "Domare 2", demands: ["Kräver kaffe"] },
-    { id: 3, name: "Domare 3", demands: ["Kräver te"] },
+    {
+      id: 1,
+      name: "Domare 1",
+      demands: ["Kräver kaffe", "Kräver te"],
+      prompt: "Vad tycker du om kaffe?",
+    },
+    {
+      id: 2,
+      name: "Domare 2",
+      demands: ["Kräver kaffe"],
+      prompt: "Vad tycker du om te?",
+    },
+    {
+      id: 3,
+      name: "Domare 3",
+      demands: ["Kräver te"],
+      prompt: "Vad tycker du om kaffe?",
+    },
   ];
 
   return (

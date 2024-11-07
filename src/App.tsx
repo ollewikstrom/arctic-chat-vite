@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 
 import Admin from "./routes/admin/Admin";
@@ -14,7 +14,10 @@ function App() {
 
       <section className="min-h-container relative">
         <Routes>
-          <Route path="/admin/" element={<Admin />} />
+          <Route
+            path="/admin/"
+            element={<Navigate to="/admin/quiz" replace />}
+          />
           <Route path="/admin/:currentPath" element={<Admin />} />
           <Route path="/*" element={<WaitingRoom />} />
           <Route path="/room/:roomId" element={<Room />} />
