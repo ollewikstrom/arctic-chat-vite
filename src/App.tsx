@@ -11,9 +11,10 @@ function App() {
     <>
       <Navbar />
 
-      <section className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)]">
+      <section className="min-h-[calc(100vh-8rem)] relative">
         <Routes>
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/" element={<Admin />} />
+          <Route path="/admin/*" element={<Admin />} />
           <Route path="/*" element={<WaitingRoom />} />
           <Route path="/room/:roomId" element={<Room />} />
         </Routes>

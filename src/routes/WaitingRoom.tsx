@@ -24,7 +24,7 @@ export default function WaitingRoom() {
   };
 
   return (
-    <div className="flex flex-col gap-6 items-center justify-center">
+    <div className="flex flex-col gap-6 items-center justify-center h-[calc(100vh-8rem)]">
       <h2 className="font-josefin font-bold text-5xl">Arktiska Väntrummet</h2>
       <form
         className="flex flex-col gap-4 items-center min-h-48"
