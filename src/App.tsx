@@ -1,7 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import "./App.css";
 
-import Admin from "./routes/Admin";
+import Admin from "./routes/admin/Admin";
 import Room from "./routes/Room";
 import WaitingRoom from "./routes/WaitingRoom";
 import Navbar from "./components/Navbar";
