@@ -12,6 +12,9 @@ export default {
       },
       colors:{
         "sogeti-blue": "rgb(0, 112, 173)"
+      },
+      height: {
+        "container": "calc(100vh - 8rem)"
       }
     },
   },

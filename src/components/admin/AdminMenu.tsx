@@ -17,6 +17,7 @@ export default function AdminMenu() {
                   : ""
               }
               to="/admin/quiz"
+              tabIndex={0}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -40,6 +41,7 @@ export default function AdminMenu() {
                   : ""
               }
               to="/admin/judges"
+              tabIndex={0}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -63,6 +65,7 @@ export default function AdminMenu() {
                   : ""
               }
               to="/admin/settings"
+              tabIndex={0}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

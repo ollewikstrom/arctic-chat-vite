@@ -4,16 +4,12 @@ import Judges from "./judges/Judges";
 import CreateQuiz from "./quiz/CreateQuiz";
 
 export default function Admin() {
-  const location = useLocation();
-  console.log(location.pathname);
+  const { currentPath } = useParams();
   const judges = [
-    { id: 1, name: "Domare 1" },
-    { id: 2, name: "Domare 2" },
-    { id: 3, name: "Domare 3" },
+    { id: 1, name: "Domare 1", demands: ["Kräver kaffe", "Kräver te"] },
+    { id: 2, name: "Domare 2", demands: ["Kräver kaffe"] },
+    { id: 3, name: "Domare 3", demands: ["Kräver te"] },
   ];
-
-  //Regex to match the last part of the URL
-  const currentPath = location.pathname.match(/[^/]+$/)![0];
 
   return (
     <>

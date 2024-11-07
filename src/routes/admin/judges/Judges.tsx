@@ -7,7 +7,7 @@ export default function Judges({ judges }: { judges: Judge[] }) {
   };
 
   return (
-    <section className="flex flex-col h-full w-full p-6 gap-6">
+    <section className="flex-container h-full w-full">
       <div className="flex justify-between">
         <h2 className="text-4xl font-bold">Domare</h2>
         <button

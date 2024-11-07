@@ -24,14 +24,14 @@ export default function WaitingRoom() {
   };
 
   return (
-    <div className="flex flex-col gap-6 items-center justify-center h-[calc(100vh-8rem)]">
+    <div className="flex-container items-center justify-center h-container">
       <h2 className="font-josefin font-bold text-5xl">Arktiska Väntrummet</h2>
       <form
-        className="flex flex-col gap-4 items-center min-h-48"
+        className="flex flex-col gap-6 max-w-lg w-full h-72 items-center justify-center min-h-48 bg-slate-300 rounded-lg border-sogeti-blue border-2 py-6 px-12 shadow-lg"
         onSubmit={handleSubmit}
       >
-        <fieldset>
-          <label htmlFor="roomCode" className="text-2xl">
+        <fieldset className="w-full text-center">
+          <label htmlFor="roomCode" className="text-2xl font-bold">
             Rumskod
           </label>
           <input
@@ -40,13 +40,15 @@ export default function WaitingRoom() {
             name="roomCode"
             id="roomCode"
             placeholder="Type here"
-            className="input input-bordered input-sogeti-blue w-full max-w-xs"
+            className="input input-bordered input-primary max-w-sm w-full mt-2"
           />
         </fieldset>
         {loading ? (
           <Loader />
         ) : (
-          <button className="btn btn-primary w-48">Gå med!</button>
+          <button className="btn btn-primary w-full max-w-sm text-lg text-white">
+            Gå med!
+          </button>
         )}
       </form>
       {error && (
