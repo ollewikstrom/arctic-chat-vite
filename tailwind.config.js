@@ -20,7 +20,7 @@ export default {
   },
   plugins: [require('daisyui')],
   daisyui: {
-    themes: ["light", "dark", "cupcake", "nord"],
+    themes: ["light", "dark", "cupcake", "nord", "valentine", "pastel", "retro", "halloween", "bumblebee", "forest", "aqua", "lofi", "wireframe"],
     base: true,
   },
 }

@@ -114,7 +114,7 @@ export default function CreateQuiz() {
               <ul className=" list-decimal list-inside flex flex-col gap-2">
                 {quizes.map((quiz) => (
                   <div
-                    className="card bg-base-100 w-96 shadow-xl"
+                    className="card bg-base-100 w-96 shadow-xl border-2"
                     key={quiz.id}
                   >
                     <div className="card-body">
@@ -171,19 +171,19 @@ export default function CreateQuiz() {
             )}
           </section>
           <section className="col-span-1 w-full flex-container">
-            <h2 className="text-4xl font-bold">Skapa ett nytt quiz</h2>
+            <h2 className="text-4xl font-bold text-black">
+              Skapa ett nytt quiz
+            </h2>
 
             <div className="w-full flex justify-center h-full">
               {updateQuizLoading ? (
                 <Loader />
               ) : (
                 <form
-                  className="flex flex-col gap-8 bg-secondary items-center p-6 rounded-md max-w-xl w-full h-96 border-sogeti-blue border-2 shadow-lg"
+                  className="flex flex-col gap-8 bg-secondary items-center p-6 rounded-md max-w-xl w-full h-96  border-2 shadow-lg"
                   onSubmit={handleSubmit}
                 >
-                  <h3 className="text-2xl font-bold text-slate-100">
-                    Skapa quiz
-                  </h3>
+                  <h3 className="text-2xl font-bold">Skapa quiz</h3>
                   <label className="input input-bordered flex items-center gap-2 drop-shadow-lg w-full">
                     <input
                       type="text"
@@ -220,7 +220,7 @@ export default function CreateQuiz() {
                       )}
                     </select>
                   </div>
-                  <button className="btn btn-primary border-slate-700 text-slate-200 drop-shadow-lg w-full max-w-lg">
+                  <button className="btn btn-accent border-2 drop-shadow-lg w-full max-w-lg">
                     Skapa nytt quiz
                   </button>
                 </form>

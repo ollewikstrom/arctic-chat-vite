@@ -36,7 +36,7 @@ export default function WaitingRoom() {
     <div className="flex-container items-center justify-center h-container">
       <h2 className="font-josefin font-bold text-5xl">Arktiska Väntrummet</h2>
       <form
-        className="flex flex-col gap-6 max-w-lg w-full h-72 items-center justify-center min-h-48 bg-slate-300 rounded-lg border-sogeti-blue border-2 py-6 px-12 shadow-lg"
+        className="flex flex-col gap-6 max-w-lg w-full h-72 items-center justify-center min-h-48 rounded-lg border-primary border-2 py-6 px-12 shadow-lg"
         onSubmit={handleSubmit}
       >
         <fieldset className="w-full text-center">
@@ -55,7 +55,7 @@ export default function WaitingRoom() {
         {loading ? (
           <Loader />
         ) : (
-          <button className="btn btn-primary w-full max-w-sm text-lg text-white">
+          <button className="btn btn-accent w-full max-w-sm text-lg shadow-lg">
             Gå med!
           </button>
         )}
