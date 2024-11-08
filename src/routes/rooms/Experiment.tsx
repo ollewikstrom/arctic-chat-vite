@@ -1,8 +1,9 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { Message, Team } from "../../utils/types";
+import { ChatbotMessage, Message, Team } from "../../utils/types";
 import { FromMessage, ToMessage } from "../../components/experiment/Messages";
 import { useParams } from "react-router-dom";
 import { QuizContext } from "../../App";
+import { chatWithChatbot } from "../../services/api/apiService";
 
 export default function Experiment() {
   const quizContext = useContext(QuizContext);
@@ -30,7 +31,7 @@ export default function Experiment() {
     setPrompt(prompt);
   };
 
-  const handleMessageSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     if (prompt === "") {
@@ -41,18 +42,31 @@ export default function Experiment() {
 
     const formData = new FormData(form);
     const message = formData.get("message") as string;
-    const sender = formData.get("anakin")
-      ? "Anakin Skywalker"
-      : "Obi-Wan Kenobi";
     // Check the checkboxes
     const msgObj: Message = {
       id: messages.length + 1,
       message,
-      sender,
-      timestamp: new Date().toISOString(),
+      sender: "user",
     };
     console.log(msgObj);
     setMessages([...messages, msgObj]);
+
+    const chatBotMsg: ChatbotMessage = {
+      question: message,
+      prompt,
+    };
+
+    const chatResponse = await chatWithChatbot(chatBotMsg);
+    //Felhantering TODO
+
+    const responseMsg: Message = {
+      id: messages.length + 2,
+      message: chatResponse,
+      sender: "bot",
+    };
+
+    setMessages([...messages, msgObj, responseMsg]);
+
     // Clear the textarea
     form.reset();
   };
@@ -152,7 +166,7 @@ export default function Experiment() {
                   </span>
                 </div>
                 {messages.map((message) =>
-                  message.sender === "Anakin Skywalker" ? (
+                  message.sender === "user" ? (
                     <ToMessage key={message.id} message={message} />
                   ) : (
                     <FromMessage key={message.id} message={message} />
@@ -201,12 +215,6 @@ export default function Experiment() {
                     : null
                 }
               />
-              <div>
-                <label htmlFor="anakin">Skicka som Anakin</label>
-                <input type="checkbox" name="anakin" id="anakin" />
-                <label htmlFor="obiwan">Skicka som Obi-Wan</label>
-                <input type="checkbox" name="obiwan" id="obiwan" />
-              </div>
             </div>
             <button className="btn btn-primary text-white min-w-lg w-32">
               Skicka

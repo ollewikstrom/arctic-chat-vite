@@ -1,5 +1,6 @@
 import {
   Answer,
+  ChatbotMessage,
   Judge,
   Judgement,
   Question,
@@ -96,6 +97,24 @@ export const addQuiz = async ({
     },
     body: JSON.stringify(newQuiz),
   });
+  return res;
+};
+
+export const chatWithChatbot = async (message: ChatbotMessage) => {
+  const res = await fetch(baseUrl + "/api/chatPlayground", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(message),
+  })
+    .then((response) => response.json())
+    .catch((error) => {
+      console.log(error);
+      return new Error("Chatbot not available");
+    });
+
+  console.log(res);
   return res;
 };
 

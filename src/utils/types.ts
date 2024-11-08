@@ -44,5 +44,9 @@ export interface Message {
   id: number;
   message: string;
   sender: string;
-  timestamp: string | null | undefined;
+}
+
+export interface ChatbotMessage {
+  question: string;
+  prompt: string;
 }
