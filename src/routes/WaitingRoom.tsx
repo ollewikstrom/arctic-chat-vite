@@ -15,17 +15,20 @@ export default function WaitingRoom() {
     e.preventDefault();
     setLoading(true);
     const roomCode = e.target.roomCode.value;
-    const response = await checkRoomPassword(roomCode);
 
-    if (response == "Room not found") {
-      setError(true);
-      setLoading(false);
-    } else {
+    //Responds with the quiz if the room exists, otherwise responds with "Room not found"
+    try {
+      const response = await checkRoomPassword(roomCode);
+
       if (quizContext) {
         quizContext.setQuiz(response[0]);
       }
       setLoading(false);
       navigate(`/room/${e.target.roomCode.value}`);
+    } catch (error) {
+      setLoading(false);
+      setError(true);
+      console.error(error);
     }
   };
 

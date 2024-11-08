@@ -1,9 +1,105 @@
-import { Answer, Judgement, Question, Team } from "../../utils/types";
+import {
+  Answer,
+  Judge,
+  Judgement,
+  Question,
+  Quiz,
+  Team,
+} from "../../utils/types";
+import { v4 as uuidv4 } from "uuid";
+import { getRandomTailWindBgColor, makeRoomCode } from "../../utils/utils";
 
 const test = true;
 const baseUrl = test
   ? "http://localhost:7247"
   : "https://hack-genai.azurewebsites.net";
+
+export const getJudges = async () => {
+  const res = await fetch(baseUrl + "/api/getJudges", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((res) => res.json())
+    .catch((error) => {
+      console.log(error);
+      return [];
+    });
+  return res;
+};
+
+export const checkRoomPassword = async (password: string) => {
+  const res = await fetch(
+    baseUrl + "/api/getQuizByPasscode?passcode=" + password,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  )
+    .then((res) => res.json())
+    .catch((error) => {
+      console.log(error);
+      throw new Error("Room not found");
+    });
+  return res;
+};
+
+export const getQuizes = async () => {
+  const res = await fetch(baseUrl + "/api/getQuizes", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((res) => res.json())
+    .catch((error) => {
+      console.log(error);
+      return [];
+    });
+  return res;
+};
+
+export const addQuiz = async ({
+  name,
+  numOfTeams,
+  judge,
+}: {
+  name: string;
+  numOfTeams: number;
+  judge: Judge;
+}) => {
+  const newQuiz: Quiz = {
+    id: uuidv4(),
+    name,
+    teams: Array.from({ length: numOfTeams }).map((_, index) => {
+      return {
+        id: uuidv4(),
+        name: `Lag ${index + 1}`,
+        prompt: "",
+        score: 0,
+        color: getRandomTailWindBgColor(),
+      };
+    }),
+    judge,
+    questions: [],
+    roomCode: makeRoomCode(6),
+    isActive: false,
+  };
+
+  const res = await fetch(baseUrl + "/api/addQuiz", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newQuiz),
+  });
+  return res;
+};
+
+//Den gamla koden
 
 export const askQuestions = async (questions: Question[], team: Team) => {
   // const res = await Promise.all(
@@ -19,23 +115,6 @@ export const askQuestions = async (questions: Question[], team: Team) => {
   }).then((response) => response.json());
 
   console.log(res);
-};
-
-export const checkRoomPassword = async (password: string) => {
-  const res = await fetch(
-    baseUrl + "/api/getQuizByPasscode?passcode=" + password,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
-  if (res.status === 200) {
-    const quiz = await res.json();
-    return quiz;
-  }
-  return "Room not found";
 };
 
 export const judgeAnswers = async (answers: Answer[]) => {

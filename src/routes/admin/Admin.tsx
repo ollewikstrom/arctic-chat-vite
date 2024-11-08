@@ -31,7 +31,7 @@ export default function Admin() {
       <section className="h-full w-full p-6">
         <AdminMenu />
 
-        {currentPath === "quiz" && <CreateQuiz judges={judges} />}
+        {currentPath === "quiz" && <CreateQuiz />}
         {currentPath === "judges" && <Judges judges={judges} />}
         {currentPath === "settings" && (
           <h2 className="text-4xl font-bold">Inställningar</h2>

@@ -1,22 +1,29 @@
-import { useEffect, useRef, useState } from "react";
-import { Message } from "../../utils/types";
+import { useContext, useEffect, useRef, useState } from "react";
+import { Message, Team } from "../../utils/types";
 import { FromMessage, ToMessage } from "../../components/experiment/Messages";
 import { useParams } from "react-router-dom";
+import { QuizContext } from "../../App";
 
 export default function Experiment() {
+  const quizContext = useContext(QuizContext);
   const { teamId } = useParams();
-  const [teamName, setTeamName] = useState<string>("Lag " + teamId);
+  const [team, setTeam] = useState<Team>();
+  const [teamName, setTeamName] = useState<string>("");
+
   const [prompt, setPrompt] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [assistentRules, setAssistentRules] = useState<string[]>([]);
   const msgFormElement = useRef<HTMLFormElement>(null);
   const promptFormElement = useRef<HTMLFormElement>(null);
+
   const handleTeamNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTeamName(e.target.value);
   };
 
   const handlePromptSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    //Ska hela lag-profilen skickas in i updateTeam? Eller det kanske räcker med updaterade fält?
     e.preventDefault();
+    setMessages([]);
     const form = e.currentTarget;
     const formData = new FormData(form);
     const prompt = formData.get("prompt") as string;
@@ -26,6 +33,12 @@ export default function Experiment() {
   const handleMessageSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
+    if (prompt === "") {
+      alert("Skapa en prompt först");
+      form.reset();
+      return;
+    }
+
     const formData = new FormData(form);
     const message = formData.get("message") as string;
     const sender = formData.get("anakin")
@@ -53,15 +66,21 @@ export default function Experiment() {
   };
 
   useEffect(() => {
+    const currentTeam = quizContext?.quiz?.teams.find(
+      (team) => team.id === teamId
+    );
+    setTeam(currentTeam);
+    setTeamName(currentTeam?.name || "");
+    console.log(currentTeam);
     setAssistentRules([
       "Assistenten ska kunna svara på frågor",
       "Assistenten ska kunna ge förslag på aktiviteter",
       "Assistenten ska kunna ge förslag på maträtter",
     ]);
-  });
+  }, []);
 
   return (
-    <section className="grid grid-cols-2 h-container overflow-hidden">
+    <section className="grid grid-cols-2 h-container">
       <section className="flex-container col-span-1 border-r-4">
         <h2 className="text-2xl font-bold">Skapa din assistent här</h2>
         <form
@@ -77,6 +96,7 @@ export default function Experiment() {
               placeholder="Lagnamn"
               value={teamName}
               className="input input-bordered w-full max-w-xs bg-white font-normal"
+              onChange={handleTeamNameChange}
             />
           </label>
           <label htmlFor="prompt" className="form-control font-bold">
@@ -106,10 +126,10 @@ export default function Experiment() {
       <section className="col-span-1 flex-container overflow-hidden">
         <h2 className="text-2xl font-bold">Testa din assistent här</h2>
         <div className="w-full h-full flex flex-col bg-white relative rounded-md p-4 overflow-hidden">
-          <div className="flex-border-2 flex-grow border-red-400 p-4 overflow-y-auto">
+          <div className="flex-border-2 flex-grow border-red-400 p-4 overflow-y-auto relative">
             {prompt !== "" ? (
               <>
-                <div role="alert" className="alert">
+                <div role="alert" className="alert sticky">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -170,21 +190,23 @@ export default function Experiment() {
             onSubmit={handleMessageSubmit}
             ref={msgFormElement}
           >
-            <textarea
-              name="message"
-              placeholder="Skriv ett meddelande..."
-              className="textarea textarea-bordered flex-1"
-              onKeyDown={(e) =>
-                handleEnterKey(e)
-                  ? msgFormElement.current?.requestSubmit()
-                  : null
-              }
-            />
-            <div>
-              <label htmlFor="anakin">Skicka som Anakin</label>
-              <input type="checkbox" name="anakin" id="anakin" />
-              <label htmlFor="obiwan">Skicka som Obi-Wan</label>
-              <input type="checkbox" name="obiwan" id="obiwan" />
+            <div className="flex flex-col gap-2 w-full h-full">
+              <textarea
+                name="message"
+                placeholder="Skriv ett meddelande..."
+                className="textarea textarea-bordered flex-1"
+                onKeyDown={(e) =>
+                  handleEnterKey(e)
+                    ? msgFormElement.current?.requestSubmit()
+                    : null
+                }
+              />
+              <div>
+                <label htmlFor="anakin">Skicka som Anakin</label>
+                <input type="checkbox" name="anakin" id="anakin" />
+                <label htmlFor="obiwan">Skicka som Obi-Wan</label>
+                <input type="checkbox" name="obiwan" id="obiwan" />
+              </div>
             </div>
             <button className="btn btn-primary text-white min-w-lg w-32">
               Skicka

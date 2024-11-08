@@ -1,10 +1,12 @@
+import { Team } from "../../utils/types";
+
 export default function TeamCard({
-  teamId,
+  team,
   color,
   selected,
   onClick,
 }: {
-  teamId: number;
+  team: Team;
   color: string;
   selected: boolean;
   onClick: () => void;
@@ -16,7 +18,7 @@ export default function TeamCard({
       }`}
     >
       <div className="card-body">
-        <h2 className="card-title">Lag {teamId}</h2>
+        <h2 className="card-title">{team.name}</h2>
         <div className="card-actions justify-end">
           {selected ? (
             <button className="btn btn-primary" disabled={true}>

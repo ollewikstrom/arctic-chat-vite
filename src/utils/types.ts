@@ -24,7 +24,7 @@ export interface Question {
   content: string;
 }
 export interface Team {
-  id: number;
+  id: string;
   name: string;
   prompt: string;
   score: number;
@@ -37,6 +37,7 @@ export interface Quiz {
   judge: Judge;
   questions: Question[];
   roomCode: string;
+  isActive: boolean;
 }
 
 export interface Message {

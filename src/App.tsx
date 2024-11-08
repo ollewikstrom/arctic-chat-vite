@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import Experiment from "./routes/rooms/Experiment";
 import { createContext, useState } from "react";
 import { Quiz } from "./utils/types";
+import JudgementDay from "./routes/admin/quiz/JudgementDay";
 
 interface QuizContextType {
   quiz: Quiz | null;
@@ -32,6 +33,7 @@ function App() {
             <Route path="/*" element={<WaitingRoom />} />
             <Route path="/room/:roomId" element={<Room />} />
             <Route path="/room/:roomId/team/:teamId" element={<Experiment />} />
+            <Route path="/quiz/:quizId/judgement" element={<JudgementDay />} />
           </Routes>
         </section>
       </QuizContext.Provider>
