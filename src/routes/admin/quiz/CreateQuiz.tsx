@@ -1,7 +1,9 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { Judge, Question, Quiz } from "../../../utils/types";
+import { Judge, Question, QuestionTheme, Quiz } from "../../../utils/types";
 import {
+  addQuestion,
   addQuiz,
+  addTheme,
   getAllQuestions,
   getJudges,
   getQuizes,
@@ -9,7 +11,7 @@ import {
 } from "../../../services/api/apiService";
 import Loader from "../../../components/Loader";
 import { v4 as uuidv4 } from "uuid";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { QuizContext } from "../../../App";
 
 export default function CreateQuiz() {
@@ -27,8 +29,19 @@ export default function CreateQuiz() {
   const [questions, setQuestions] = useState<Question[]>();
   const [numOfQuestions, setNumOfQuestions] = useState<number>(0);
   const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
+  const [customQuestion, setCustomQuestion] = useState<string>("");
+  const [selectedTheme, setSelectedTheme] = useState<QuestionTheme>({
+    id: "",
+    theme: "Välj ett tema",
+  });
+  const [newThemeName, setNewThemeName] = useState<string>("");
+  const [questionThemes, setQuestionThemes] = useState<QuestionTheme[]>([]);
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const modalRefs = useRef<Map<string, HTMLDialogElement>>(new Map());
+  const gradingModalRef = useRef<HTMLDialogElement>(null);
+  const questionThemesRef = useRef<HTMLDialogElement>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setUpdateQuizLoading(true);
@@ -69,7 +82,7 @@ export default function CreateQuiz() {
       setNumOfQuestions(0);
       setSelectedQuestions([]);
 
-      setQuizes([...(quizes || []), quiz]);
+      setQuizes([quiz, ...(quizes || [])]);
       setUpdateQuizLoading(false);
       form.reset();
     } else {
@@ -86,19 +99,47 @@ export default function CreateQuiz() {
     }
   };
 
+  const handleCreateTheme = async () => {
+    if (newThemeName === "") {
+      return;
+    }
+    const newTheme: QuestionTheme = {
+      id: uuidv4(),
+      theme: newThemeName,
+    };
+    setQuestionThemes([...questionThemes, newTheme]);
+    questionThemesRef.current?.close();
+    await addTheme(newTheme);
+  };
+
+  const handleAddQuestion = async () => {
+    const newQuestion = {
+      id: uuidv4(),
+      content: customQuestion,
+      type: "question",
+    };
+
+    setSelectedQuestions([...selectedQuestions, newQuestion]);
+    setNumOfQuestions(selectedQuestions.length + 1);
+    setCustomQuestion("");
+    await addQuestion(newQuestion);
+  };
+
   const handleFinishButton = (quiz: string) => {
     alert("Avslutar quiz " + quiz);
   };
 
   const handleGradingQuiz = (quiz: Quiz) => {
-    const result = confirm("Vill du rätta quiz " + quiz.name + "?");
-    if (!result) {
-      return;
-    }
+    // const result = confirm("Vill du rätta quiz " + quiz.name + "?");
+    // if (!result) {
+    //   return;
+    // }
+    gradingModalRef.current?.showModal();
+
     //Set the global quiz state
     quizContext.setQuiz(quiz);
     //Navigate to the grading page
-    navigate("/quiz/" + quiz.id + "/judgement");
+    // navigate("/quiz/" + quiz.id + "/judgement");
   };
 
   const handleRemoveQuiz = async (quiz: Quiz) => {
@@ -138,17 +179,17 @@ export default function CreateQuiz() {
     setQuizes(quizes);
     setIsPageLoading(false);
   };
-  const fetchQuiestions = async () => {
+  const fetchQuestions = async () => {
     setIsPageLoading(true);
     const questions = await getAllQuestions();
     setQuestions(questions);
     setIsPageLoading(false);
   };
-  useEffect(() => {
-    fetchJudges();
-    fetchQuizes();
-    fetchQuiestions();
-  }, []);
+  // useEffect(() => {
+  //   fetchJudges();
+  //   fetchQuizes();
+  //   fetchQuestions();
+  // }, []);
 
   return (
     <>
@@ -265,18 +306,37 @@ export default function CreateQuiz() {
                         >
                           Rätta
                         </button>
-                        <button
-                          className="btn bg-red-600"
-                          onClick={() => handleFinishButton(quiz.id)}
+                        <div
+                          className="tooltip"
+                          data-tip="Du måste rätta quizet innan du kan visa resultat"
                         >
-                          Avsluta
-                        </button>
+                          <button
+                            className="btn bg-red-600"
+                            disabled={quiz.isActive}
+                            onClick={() => handleFinishButton(quiz.id)}
+                          >
+                            Visa Resultat
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
               </ul>
             )}
+            <dialog className="modal" ref={gradingModalRef}>
+              <div className="modal-box w-11/12 max-w-5xl">
+                <form method="dialog">
+                  {/* if there is a button in form, it will close the modal */}
+                  <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+                    ✕
+                  </button>
+                </form>
+                <h3 className="font-bold text-lg">Hello!</h3>
+                <p className="py-4">Click the button below to close</p>
+                <div className="modal-action"></div>
+              </div>
+            </dialog>
           </section>
           <section className="col-span-1 w-full flex-container">
             <h2 className="text-4xl font-bold text-black">
@@ -312,24 +372,90 @@ export default function CreateQuiz() {
                         min="0"
                       />
                     </label>
-                    <select
-                      className="select select-bordered w-full max-w-lg drop-shadow-lg"
-                      name="judge"
+                    <details
+                      className="dropdown w-full"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      open={isDropdownOpen}
                     >
-                      <option disabled selected>
-                        Domare
-                      </option>
-                      {judges === undefined || judges.length === 0 ? (
-                        <option>Loading...</option>
-                      ) : (
-                        <>
-                          {judges.map((judge) => (
-                            <option key={judge.id}>{judge.name}</option>
-                          ))}
-                        </>
-                      )}
-                    </select>
+                      <summary className="btn m-1 w-full">
+                        {selectedTheme.theme}
+                      </summary>
+                      <ul className="menu dropdown-content bg-base-100 rounded-box z-[1] w-full p-2 shadow">
+                        {questionThemes.map((theme) => (
+                          <li key={theme.id}>
+                            <a
+                              onClick={() => {
+                                setSelectedTheme(theme);
+                                setIsDropdownOpen(false);
+                              }}
+                            >
+                              {theme.theme}
+                            </a>
+                          </li>
+                        ))}
+
+                        <div className="divider"></div>
+                        <li>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              questionThemesRef.current?.showModal()
+                            }
+                          >
+                            +Skapa ett nytt tema
+                          </button>
+                        </li>
+                      </ul>
+                    </details>
+                    <dialog className="modal" ref={questionThemesRef}>
+                      <div className="modal-box gap-6">
+                        <h3 className="font-bold text-lg mb-4">
+                          Skapa ett nytt tema
+                        </h3>
+                        <label className="input input-bordered flex items-center gap-4 drop-shadow-lg w-full">
+                          <input
+                            type="text"
+                            className=""
+                            placeholder="Namn på temat"
+                            value={newThemeName}
+                            onChange={(e) => setNewThemeName(e.target.value)}
+                            name="themeName"
+                          />
+                        </label>
+                        <div className="modal-action">
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={handleCreateTheme}
+                          >
+                            Skapa
+                          </button>
+
+                          <form method="dialog" className="flex gap-4">
+                            <button className="btn">Avbryt</button>
+                          </form>
+                        </div>
+                      </div>
+                    </dialog>
                   </div>
+                  <select
+                    className="select select-bordered w-full max-w-lg drop-shadow-lg"
+                    name="judge"
+                  >
+                    <option disabled selected>
+                      Domare
+                    </option>
+                    {judges === undefined || judges.length === 0 ? (
+                      <option>Loading...</option>
+                    ) : (
+                      <>
+                        {judges.map((judge) => (
+                          <option key={judge.id}>{judge.name}</option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+
                   <div className="flex flex-col gap-2 w-full">
                     <h3 className="w-full font-bold">
                       Valda frågor: {numOfQuestions}
@@ -394,7 +520,33 @@ export default function CreateQuiz() {
                         )}
                       </ul>
                     </details>
+                    <label className="input input-bordered flex items-center gap-2 drop-shadow-lg w-full">
+                      <input
+                        type="text"
+                        className="grow"
+                        placeholder="Lägg till en ny fråga"
+                        name="name"
+                        onChange={(e) => setCustomQuestion(e.target.value)}
+                        value={customQuestion}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddQuestion}
+                        className="btn btn-primary btn-circle min-h-10 h-10 w-10 text-3xl justify-center items-center"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          height="24px"
+                          viewBox="0 -960 960 960"
+                          width="24px"
+                          fill="#5f6368"
+                        >
+                          <path d="M440-440H240q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h200v-200q0-17 11.5-28.5T480-760q17 0 28.5 11.5T520-720v200h200q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H520v200q0 17-11.5 28.5T480-200q-17 0-28.5-11.5T440-240v-200Z" />
+                        </svg>
+                      </button>
+                    </label>
                   </div>
+
                   <button className="btn btn-accent border-2 drop-shadow-lg w-full max-w-lg">
                     Skapa nytt quiz
                   </button>

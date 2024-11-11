@@ -1,9 +1,11 @@
 import {
   Answer,
   ChatbotMessage,
+  EndGameObject,
   Judge,
   Judgement,
   Question,
+  QuestionTheme,
   Quiz,
   Team,
 } from "../../utils/types";
@@ -89,7 +91,7 @@ export const addQuiz = async ({
     judge,
     questions,
     roomCode: makeRoomCode(6),
-    isActive: false,
+    isActive: true,
   };
 
   const res = await fetch(baseUrl + "/api/addQuiz", {
@@ -115,8 +117,6 @@ export const chatWithChatbot = async (message: ChatbotMessage) => {
       console.log(error);
       return new Error("Chatbot not available");
     });
-
-  console.log(res);
   return res;
 };
 
@@ -133,6 +133,86 @@ export const removeQuiz = async (quiz: Quiz) => {
 
 export const getAllQuestions = async () => {
   const res = await fetch(baseUrl + "/api/getQuestions", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((res) => res.json())
+    .catch((error) => {
+      console.log(error);
+      return [];
+    });
+  return res;
+};
+
+export const getQuestionsTeamsAndAnswers = async (
+  quiz: Quiz
+): Promise<EndGameObject> => {
+  const res = await fetch(baseUrl + "/api/getQuestionsTeamsAndAnswers", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(quiz),
+  })
+    .then((res) => res.json())
+    .catch((error) => {
+      console.log(error);
+      return [];
+    });
+  return res;
+};
+
+export const updateTeam = async (team: Team) => {
+  const res = await fetch(baseUrl + "/api/updateTeam", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(team),
+  });
+  return res;
+};
+
+export const getAnswersForAllTeams = async (quiz: Quiz) => {
+  const res = await fetch(baseUrl + "/api/getAnswersForAllTeams", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(quiz),
+  })
+    .then((res) => res.json())
+    .catch((error) => {
+      console.log(error);
+      return [];
+    });
+  return res;
+};
+
+export const addQuestion = async (question: Question) => {
+  return fetch(baseUrl + "/api/addQuestion", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(question),
+  });
+};
+
+export const addTheme = async (theme: QuestionTheme) => {
+  return fetch(baseUrl + "/api/addTheme", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ theme }),
+  });
+};
+
+export const getThemes = async () => {
+  const res = await fetch(baseUrl + "/api/getThemes", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -235,16 +315,6 @@ export const getTeamScores = async (question: Question, teams: Team[]) => {
 
   console.log(updated);
   return updated;
-};
-
-export const addQuestion = async (question: Question) => {
-  try {
-    const response = await axios.post(baseUrl + "/api/addQuestion", question);
-
-    return response.data;
-  } catch (error) {
-    return error;
-  }
 };
 
 export const getQuestions = async () => {

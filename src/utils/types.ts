@@ -50,3 +50,14 @@ export interface ChatbotMessage {
   question: string;
   prompt: string;
 }
+
+export interface EndGameObject {
+  questions: Question[];
+  teams: Team[];
+  answers: Answer[];
+}
+
+export interface QuestionTheme {
+  id: string;
+  theme: string;
+}
