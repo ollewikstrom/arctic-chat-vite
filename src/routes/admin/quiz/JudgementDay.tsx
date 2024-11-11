@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useParams } from "react-router-dom";
 import Start from "./judgementStates/Start";
 import QuestionState from "./judgementStates/Question";
 import { Answer, Judgement, Question, Team } from "../../../utils/types";
 import AnswerCard from "../../../components/admin/quiz/Answer";
 import Scores from "./judgementStates/Scores";
+import { QuizContext } from "../../../App";
 
 // const judgementContext = createContext<JudgementContextType | null>(null);
 
@@ -15,7 +16,11 @@ enum FlowState {
 }
 
 export default function JudgementDay() {
-  const { quizId } = useParams();
+  const quizContext = useContext(QuizContext);
+  if (!quizContext) {
+    throw new Error("Quiz context is not defined");
+  }
+
   const [flowState, setFlowState] = useState<FlowState>(FlowState.Start);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -99,44 +104,56 @@ export default function JudgementDay() {
           Nästa
         </button>
       </nav>
-      {flowState === FlowState.Start && <Start quizId={quizId || ""} />}
-      {flowState === FlowState.Question && (
+      {quizContext && (
         <>
-          <QuestionState
-            question={exampleQuestion}
-            questionIndex={currentQuestionIndex}
-          />
-          {showAnswers && (
-            <ul className="flex flex-wrap gap-4 justify-between">
-              <AnswerCard
-                answer={exampleAnswer}
-                showMotivation={showMotivation}
-              />
-              <AnswerCard
-                answer={exampleAnswer}
-                showMotivation={showMotivation}
-              />
-              <AnswerCard
-                answer={exampleAnswer}
-                showMotivation={showMotivation}
-              />
-              <AnswerCard
-                answer={exampleAnswer}
-                showMotivation={showMotivation}
-              />
-              <AnswerCard
-                answer={exampleAnswer}
-                showMotivation={showMotivation}
-              />
-              <AnswerCard
-                answer={exampleAnswer}
-                showMotivation={showMotivation}
-              />
-            </ul>
+          {quizContext.quiz ? (
+            <>
+              {flowState === FlowState.Start && (
+                <Start quiz={quizContext.quiz} />
+              )}
+            </>
+          ) : (
+            <h1>Quiz context har gått snett</h1>
           )}
+          {flowState === FlowState.Question && (
+            <>
+              <QuestionState
+                question={exampleQuestion}
+                questionIndex={currentQuestionIndex}
+              />
+              {showAnswers && (
+                <ul className="flex flex-wrap gap-4 justify-between">
+                  <AnswerCard
+                    answer={exampleAnswer}
+                    showMotivation={showMotivation}
+                  />
+                  <AnswerCard
+                    answer={exampleAnswer}
+                    showMotivation={showMotivation}
+                  />
+                  <AnswerCard
+                    answer={exampleAnswer}
+                    showMotivation={showMotivation}
+                  />
+                  <AnswerCard
+                    answer={exampleAnswer}
+                    showMotivation={showMotivation}
+                  />
+                  <AnswerCard
+                    answer={exampleAnswer}
+                    showMotivation={showMotivation}
+                  />
+                  <AnswerCard
+                    answer={exampleAnswer}
+                    showMotivation={showMotivation}
+                  />
+                </ul>
+              )}
+            </>
+          )}
+          {flowState === FlowState.Scores && <Scores />}
         </>
       )}
-      {flowState === FlowState.Scores && <Scores />}
     </section>
   );
 }

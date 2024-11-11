@@ -1,19 +1,34 @@
-import { useEffect, useState } from "react";
-import { Judge, Quiz } from "../../../utils/types";
+import { useContext, useEffect, useRef, useState } from "react";
+import { Judge, Question, Quiz } from "../../../utils/types";
 import {
   addQuiz,
+  getAllQuestions,
   getJudges,
   getQuizes,
+  removeQuiz,
 } from "../../../services/api/apiService";
 import Loader from "../../../components/Loader";
 import { v4 as uuidv4 } from "uuid";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { QuizContext } from "../../../App";
 
 export default function CreateQuiz() {
-  const [pageLoading, setIsPageLoading] = useState(true);
+  const quizContext = useContext(QuizContext);
+  if (!quizContext) {
+    throw new Error("Quiz context is not defined");
+  }
+
+  const navigate = useNavigate();
+
+  const [pageLoading, setIsPageLoading] = useState(false);
   const [updateQuizLoading, setUpdateQuizLoading] = useState(false);
   const [judges, setJudges] = useState<Judge[]>();
   const [quizes, setQuizes] = useState<Quiz[]>();
+  const [questions, setQuestions] = useState<Question[]>();
+  const [numOfQuestions, setNumOfQuestions] = useState<number>(0);
+  const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
+
+  const modalRefs = useRef<Map<string, HTMLDialogElement>>(new Map());
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setUpdateQuizLoading(true);
@@ -44,10 +59,16 @@ export default function CreateQuiz() {
       name,
       numOfTeams: parseInt(numOfTeams),
       judge,
+      questions: selectedQuestions,
     });
 
     if (res.status === 200) {
       const quiz = await res.json();
+
+      //Clean up
+      setNumOfQuestions(0);
+      setSelectedQuestions([]);
+
       setQuizes([...(quizes || []), quiz]);
       setUpdateQuizLoading(false);
       form.reset();
@@ -58,12 +79,49 @@ export default function CreateQuiz() {
     }
   };
 
+  const handleModalOpen = (quizId: string) => {
+    const modal = modalRefs.current.get(quizId);
+    if (modal) {
+      modal.showModal();
+    }
+  };
+
   const handleFinishButton = (quiz: string) => {
     alert("Avslutar quiz " + quiz);
   };
 
-  const handleGradingQuiz = (quiz: string) => {
-    alert("Rättar quiz " + quiz);
+  const handleGradingQuiz = (quiz: Quiz) => {
+    const result = confirm("Vill du rätta quiz " + quiz.name + "?");
+    if (!result) {
+      return;
+    }
+    //Set the global quiz state
+    quizContext.setQuiz(quiz);
+    //Navigate to the grading page
+    navigate("/quiz/" + quiz.id + "/judgement");
+  };
+
+  const handleRemoveQuiz = async (quiz: Quiz) => {
+    const result = confirm("Vill du verkligen ta bort quiz " + quiz.name + "?");
+
+    const name = quiz.name;
+
+    if (!result) {
+      return;
+    }
+
+    // Remove quiz from list
+    const newQuizes = quizes?.filter((q) => q.id !== quiz.id);
+    setQuizes(newQuizes);
+
+    // Remove quiz from database
+    const res = await removeQuiz(quiz);
+
+    if (res.status === 200) {
+      alert("Quiz " + name + " borttaget");
+    } else {
+      alert("Något gick fel: " + res.status + " " + res.statusText);
+    }
   };
 
   const fetchJudges = async () => {
@@ -75,12 +133,21 @@ export default function CreateQuiz() {
   const fetchQuizes = async () => {
     setIsPageLoading(true);
     const quizes = await getQuizes();
+    //Reverse the order of the quizes
+    quizes.reverse();
     setQuizes(quizes);
+    setIsPageLoading(false);
+  };
+  const fetchQuiestions = async () => {
+    setIsPageLoading(true);
+    const questions = await getAllQuestions();
+    setQuestions(questions);
     setIsPageLoading(false);
   };
   useEffect(() => {
     fetchJudges();
     fetchQuizes();
+    fetchQuiestions();
   }, []);
 
   return (
@@ -90,7 +157,7 @@ export default function CreateQuiz() {
           <Loader />
         </div>
       ) : (
-        <section className="grid grid-cols-2 h-full w-full overflow-hidden">
+        <section className="grid grid-cols-2 h-full w-full">
           <section className="col-span-1 w-full flex-container border-r-2 overflow-y-auto">
             <h2 className="text-4xl font-bold">Aktiva Quiz</h2>
             {quizes === undefined || quizes.length === 0 ? (
@@ -114,7 +181,7 @@ export default function CreateQuiz() {
               <ul className=" list-decimal list-inside flex flex-col gap-2">
                 {quizes.map((quiz) => (
                   <div
-                    className="card bg-base-100 w-96 shadow-xl border-2"
+                    className="card bg-base-100 w-96 shadow-xl border-2 relative"
                     key={quiz.id}
                   >
                     <div className="card-body">
@@ -123,6 +190,12 @@ export default function CreateQuiz() {
                         <span className="font-bold">Domare: </span>
                         {quiz.judge.name}
                       </p>
+                      <button
+                        className="btn btn-warning absolute right-5 top-5"
+                        onClick={() => handleRemoveQuiz(quiz)}
+                      >
+                        Ta bort
+                      </button>
                       <p>
                         <span className="font-bold">Antal lag: </span>
                         {quiz.teams.length}
@@ -149,14 +222,49 @@ export default function CreateQuiz() {
                           </button>
                         </div>
                       </p>
+                      {/* Open the modal using document.getElementById('ID').showModal() method */}
+                      <button
+                        className="btn"
+                        onClick={() => handleModalOpen(quiz.id)}
+                      >
+                        Visa frågor
+                      </button>
+                      <dialog
+                        id="my_modal_1"
+                        className="modal"
+                        ref={(el) => {
+                          if (el) {
+                            modalRefs.current.set(quiz.id, el);
+                          }
+                        }}
+                      >
+                        <div className="modal-box">
+                          <h3 className="font-bold text-lg">Frågor</h3>
+                          <ul>
+                            {quiz.questions.length === 0 && (
+                              <li>{quiz.name} har inga frågor</li>
+                            )}
+                            {quiz.questions.map((question) => (
+                              <li key={question.id} className=" list-disc">
+                                {question.content}
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="modal-action">
+                            <form method="dialog">
+                              <button className="btn">Close</button>
+                            </form>
+                          </div>
+                        </div>
+                      </dialog>
 
                       <div className="card-actions justify-end">
-                        <Link
-                          to={"/quiz/" + quiz.id + "/judgement"}
+                        <button
                           className="btn bg-blue-600 text-white"
+                          onClick={() => handleGradingQuiz(quiz)}
                         >
                           Rätta
-                        </Link>
+                        </button>
                         <button
                           className="btn bg-red-600"
                           onClick={() => handleFinishButton(quiz.id)}
@@ -175,28 +283,30 @@ export default function CreateQuiz() {
               Skapa ett nytt quiz
             </h2>
 
-            <div className="w-full flex justify-center h-full">
+            <div className="w-full flex justify-center h-full max-h-fit">
               {updateQuizLoading ? (
                 <Loader />
               ) : (
                 <form
-                  className="flex flex-col gap-8 bg-secondary items-center p-6 rounded-md max-w-xl w-full h-96  border-2 shadow-lg"
+                  className="flex flex-col gap-8 bg-secondary items-center p-6 rounded-md max-w-xl w-full border-2 shadow-lg"
                   onSubmit={handleSubmit}
                 >
                   <h3 className="text-2xl font-bold">Skapa quiz</h3>
-                  <label className="input input-bordered flex items-center gap-2 drop-shadow-lg w-full">
-                    <input
-                      type="text"
-                      className="grow"
-                      placeholder="Namn"
-                      name="name"
-                    />
-                  </label>
+                  <div className="flex justify-between w-full gap-4">
+                    <label className="input input-bordered flex items-center gap-2 drop-shadow-lg w-full">
+                      <input
+                        type="text"
+                        className="grow"
+                        placeholder="Namn"
+                        name="name"
+                      />
+                    </label>
+                  </div>
                   <div className="flex justify-between w-full gap-4">
                     <label className="input input-bordered flex items-center gap-2 drop-shadow-lg w-full">
                       <input
                         type="number"
-                        className="grow"
+                        className=""
                         placeholder="Antal deltagare"
                         name="numOfTeams"
                         min="0"
@@ -219,6 +329,71 @@ export default function CreateQuiz() {
                         </>
                       )}
                     </select>
+                  </div>
+                  <div className="flex flex-col gap-2 w-full">
+                    <h3 className="w-full font-bold">
+                      Valda frågor: {numOfQuestions}
+                    </h3>
+                    <ul className="flex flex-wrap gap-2 justify-center">
+                      {selectedQuestions.length === 0 && (
+                        <li className="p-4 h-fit">Inga frågor valda</li>
+                      )}
+                      {selectedQuestions.map((question) => (
+                        <li key={question.id}>
+                          <div
+                            className="badge badge-neutral p-4 h-fit"
+                            onClick={() => {
+                              setSelectedQuestions(
+                                selectedQuestions.filter(
+                                  (q) => q.id !== question.id
+                                )
+                              );
+                              setQuestions([...(questions || []), question]);
+                              setNumOfQuestions(selectedQuestions.length - 1);
+                            }}
+                          >
+                            {question.content}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="divider w-full"></div>
+                    <details className="dropdown w-full">
+                      <summary className="btn m-1 w-full">Välj frågor!</summary>
+                      <ul className="menu dropdown-content bg-base-100 rounded-box gap-2 z-[1] p-2 shadow w-full">
+                        {questions === undefined &&
+                        selectedQuestions.length === 0 ? (
+                          <li>Loading...</li>
+                        ) : (questions ?? []).length === 0 &&
+                          selectedQuestions.length !== 0 ? (
+                          <li>Inga fler frågor</li>
+                        ) : (
+                          <>
+                            {(questions ?? []).map((question, i) => (
+                              <li
+                                key={i}
+                                onClick={() => {
+                                  setSelectedQuestions([
+                                    ...selectedQuestions,
+                                    question,
+                                  ]);
+                                  setQuestions(
+                                    (questions ?? []).filter(
+                                      (q) => q.id !== question.id
+                                    )
+                                  );
+                                  setNumOfQuestions(
+                                    selectedQuestions.length + 1
+                                  );
+                                }}
+                              >
+                                <a>{question.content}</a>
+                              </li>
+                            ))}
+                          </>
+                        )}
+                      </ul>
+                    </details>
                   </div>
                   <button className="btn btn-accent border-2 drop-shadow-lg w-full max-w-lg">
                     Skapa nytt quiz
