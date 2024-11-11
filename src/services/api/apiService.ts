@@ -67,10 +67,12 @@ export const addQuiz = async ({
   name,
   numOfTeams,
   judge,
+  questions,
 }: {
   name: string;
   numOfTeams: number;
   judge: Judge;
+  questions: Question[];
 }) => {
   const newQuiz: Quiz = {
     id: uuidv4(),
@@ -85,7 +87,7 @@ export const addQuiz = async ({
       };
     }),
     judge,
-    questions: [],
+    questions,
     roomCode: makeRoomCode(6),
     isActive: false,
   };
@@ -115,6 +117,32 @@ export const chatWithChatbot = async (message: ChatbotMessage) => {
     });
 
   console.log(res);
+  return res;
+};
+
+export const removeQuiz = async (quiz: Quiz) => {
+  const res = await fetch(baseUrl + "/api/deleteQuiz", {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(quiz),
+  });
+  return res;
+};
+
+export const getAllQuestions = async () => {
+  const res = await fetch(baseUrl + "/api/getQuestions", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((res) => res.json())
+    .catch((error) => {
+      console.log(error);
+      return [];
+    });
   return res;
 };
 
