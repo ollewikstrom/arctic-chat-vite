@@ -53,3 +53,20 @@ export function makeRoomCode(length: number) {
   }
   return result;
 }
+
+export const synthwaveColors = [
+  "#ff5e99", // Neon Pink
+  "#ff76d7", // Bright Magenta
+  "#9e51ff", // Purple
+  "#5c4bfe", // Deep Violet
+  "#4832e4", // Electric Blue
+  "#2d1b8f", // Dark Purple
+  "#18ffff", // Cyan
+  "#00e5ff", // Light Neon Blue
+  "#e0ff26", // Neon Yellow
+  "#ff9100", // Neon Orange
+  "#ff1744", // Bright Red
+  "#282a36", // Dark Background (Base Color)
+  "#1a1a2e", // Midnight Background
+  "#000000", // Pure Black
+];

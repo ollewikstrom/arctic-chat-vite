@@ -1,6 +1,6 @@
 export interface Answer {
   id: string;
-  teamName: string;
+  team: string;
   content: string;
   question: Question;
 }
