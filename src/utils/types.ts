@@ -20,7 +20,7 @@ export interface Judgement {
 
 export interface Question {
   id: string;
-  type: string;
+  theme: QuestionTheme;
   content: string;
 }
 export interface Team {
@@ -49,4 +49,15 @@ export interface Message {
 export interface ChatbotMessage {
   question: string;
   prompt: string;
+}
+
+export interface EndGameObject {
+  questions: Question[];
+  teams: Team[];
+  answers: Answer[];
+}
+
+export interface QuestionTheme {
+  id: string;
+  name: string;
 }

@@ -1,16 +1,20 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { ChatbotMessage, Message, Team } from "../../utils/types";
-import { FromMessage, ToMessage } from "../../components/experiment/Messages";
+import {
+  FromMessage,
+  LoadingFromMessage,
+  ToMessage,
+} from "../../components/experiment/Messages";
 import { useParams } from "react-router-dom";
 import { QuizContext } from "../../App";
-import { chatWithChatbot } from "../../services/api/apiService";
+import { chatWithChatbot, updateTeam } from "../../services/api/apiService";
 
 export default function Experiment() {
   const quizContext = useContext(QuizContext);
   const { teamId } = useParams();
+
   const [team, setTeam] = useState<Team>();
   const [teamName, setTeamName] = useState<string>("");
-
   const [prompt, setPrompt] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [assistentRules, setAssistentRules] = useState<string[]>([]);
@@ -21,7 +25,7 @@ export default function Experiment() {
     setTeamName(e.target.value);
   };
 
-  const handlePromptSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handlePromptSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     //Ska hela lag-profilen skickas in i updateTeam? Eller det kanske räcker med updaterade fält?
     e.preventDefault();
     setMessages([]);
@@ -29,6 +33,12 @@ export default function Experiment() {
     const formData = new FormData(form);
     const prompt = formData.get("prompt") as string;
     setPrompt(prompt);
+    if (!team) return;
+    const updatedTeam: Team = { ...team, prompt };
+    setTeam(updatedTeam);
+
+    const res = await updateTeam(updatedTeam);
+    console.log(res);
   };
 
   const handleMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -46,10 +56,18 @@ export default function Experiment() {
     const msgObj: Message = {
       id: messages.length + 1,
       message,
-      sender: "user",
+      sender: teamName,
     };
-    console.log(msgObj);
-    setMessages([...messages, msgObj]);
+    setMessages((prev) => [...prev, msgObj]);
+    // Clear the textarea
+    form.reset();
+
+    const loaderMsg: Message = {
+      id: messages.length + 2,
+      message: "",
+      sender: "loader",
+    };
+    setMessages((prev) => [...prev, loaderMsg]);
 
     const chatBotMsg: ChatbotMessage = {
       question: message,
@@ -59,16 +77,15 @@ export default function Experiment() {
     const chatResponse = await chatWithChatbot(chatBotMsg);
     //Felhantering TODO
 
+    setMessages((prev) => [...prev.slice(0, prev.length - 1)]);
+
     const responseMsg: Message = {
       id: messages.length + 2,
       message: chatResponse,
-      sender: "bot",
+      sender: teamName + "'s bot",
     };
 
-    setMessages([...messages, msgObj, responseMsg]);
-
-    // Clear the textarea
-    form.reset();
+    setMessages((prev) => [...prev, responseMsg]);
   };
 
   const handleEnterKey = (e: any) => {
@@ -86,11 +103,7 @@ export default function Experiment() {
     setTeam(currentTeam);
     setTeamName(currentTeam?.name || "");
     console.log(currentTeam);
-    setAssistentRules([
-      "Assistenten ska kunna svara på frågor",
-      "Assistenten ska kunna ge förslag på aktiviteter",
-      "Assistenten ska kunna ge förslag på maträtter",
-    ]);
+    setAssistentRules(quizContext?.quiz?.judge.demands || []);
   }, []);
 
   return (
@@ -166,9 +179,12 @@ export default function Experiment() {
                   </span>
                 </div>
                 {messages.map((message) =>
-                  message.sender === "user" ? (
+                  message.sender === teamName ? (
                     <ToMessage key={message.id} message={message} />
+                  ) : message.sender === "loader" ? (
+                    <LoadingFromMessage key={message.id} teamName={teamName} />
                   ) : (
+                    // @ts-ignore
                     <FromMessage key={message.id} message={message} />
                   )
                 )}
