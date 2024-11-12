@@ -2,6 +2,8 @@ import { useLocation, useParams } from "react-router-dom";
 import AdminMenu from "../../components/admin/AdminMenu";
 import Judges from "./judges/Judges";
 import CreateQuiz from "./quiz/CreateQuiz";
+import Questions from "./questions/questions";
+import { Question } from "../../utils/types";
 
 export default function Admin() {
   const { currentPath } = useParams();
@@ -24,7 +26,25 @@ export default function Admin() {
       demands: ["Kräver te"],
       prompt: "Vad tycker du om kaffe?",
     },
-  ];
+  ]
+
+  const questions: Question[] = [
+    {
+      id: "1",
+      type: "string;",
+      content: "Vad är ditt namn?",
+    },
+    {
+      id: "2",
+      type: "string;",
+      content: "Vad är din ålder?",
+    },
+    {
+      id: "3",
+      type: "string;",
+      content: "Vad är din favoritfärg?",
+    },
+  ]
 
   return (
     <>
@@ -33,6 +53,7 @@ export default function Admin() {
 
         {currentPath === "quiz" && <CreateQuiz />}
         {currentPath === "judges" && <Judges judges={judges} />}
+        {currentPath === "questions" && <Questions questions={questions} />}
         {currentPath === "settings" && (
           <h2 className="text-4xl font-bold">Inställningar</h2>
         )}
