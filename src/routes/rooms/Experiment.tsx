@@ -7,7 +7,11 @@ import {
 } from "../../components/experiment/Messages";
 import { useParams } from "react-router-dom";
 import { QuizContext } from "../../App";
-import { chatWithChatbot, updateTeam } from "../../services/api/apiService";
+import {
+  chatWithChatbot,
+  getTeamById,
+  updateTeam,
+} from "../../services/api/apiService";
 
 export default function Experiment() {
   const quizContext = useContext(QuizContext);
@@ -34,10 +38,10 @@ export default function Experiment() {
     const prompt = formData.get("prompt") as string;
     setPrompt(prompt);
     if (!team) return;
-    const updatedTeam: Team = { ...team, prompt };
+    const updatedTeam: Team = { ...team, prompt, name: teamName };
     setTeam(updatedTeam);
 
-    const res = await updateTeam(updatedTeam);
+    const res = await updateTeam(team, prompt, teamName);
     console.log(res);
   };
 
@@ -97,13 +101,16 @@ export default function Experiment() {
   };
 
   useEffect(() => {
-    const currentTeam = quizContext?.quiz?.teams.find(
-      (team) => team.id === teamId
-    );
-    setTeam(currentTeam);
-    setTeamName(currentTeam?.name || "");
-    console.log(currentTeam);
-    setAssistentRules(quizContext?.quiz?.judge.demands || []);
+    if (!teamId) return;
+    const getTeam = async () => {
+      const res = await getTeamById(teamId);
+      const team = res[0];
+      setTeam(team);
+      setTeamName(team.name);
+      setPrompt(team.prompt);
+      setAssistentRules(quizContext?.quiz?.judge.demands || []);
+    };
+    getTeam();
   }, []);
 
   return (
@@ -122,11 +129,11 @@ export default function Experiment() {
               id="teamName"
               placeholder="Lagnamn"
               value={teamName}
-              className="input input-bordered w-full max-w-xs bg-white font-normal"
+              className="input input-bordered w-full max-w-xs bg-white text-black font-normal"
               onChange={handleTeamNameChange}
             />
           </label>
-          <label htmlFor="prompt" className="form-control font-bold">
+          <label htmlFor="prompt" className="form-control font-bold text-black">
             Prompt
             <textarea
               id="prompt"
