@@ -7,7 +7,7 @@ import WaitingRoom from "./routes/WaitingRoom";
 import Navbar from "./components/Navbar";
 import Experiment from "./routes/rooms/Experiment";
 import { createContext, useState } from "react";
-import { Quiz, Team } from "./utils/types";
+import { Answer, Judgement, Quiz, Team } from "./utils/types";
 import JudgementDay from "./routes/admin/quiz/JudgementDay";
 
 interface QuizContextType {
@@ -15,29 +15,49 @@ interface QuizContextType {
   setQuiz: (quiz: Quiz | null) => void;
 }
 
+interface ResultType {
+  answers: Answer[];
+  judgements: Judgement[];
+}
+
+interface ResultContextType {
+  results: ResultType | null;
+  setResults: (results: ResultType | null) => void;
+}
+
 export const QuizContext = createContext<QuizContextType | null>(null);
+export const ResultContext = createContext<ResultContextType | null>(null);
 
 function App() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [results, setResults] = useState<ResultType | null>(null);
   return (
     <>
       <Navbar />
       <QuizContext.Provider value={{ quiz, setQuiz }}>
-        <section className="min-h-container relative">
-          <Routes>
-            <Route
-              path="/admin/"
-              element={<Navigate to="/admin/quiz" replace />}
-            />
-            <Route path="/admin/:currentPath" element={<Admin />} />
-            <Route path="/*" element={<WaitingRoom />} />
+        <ResultContext.Provider value={{ results, setResults }}>
+          <section className="min-h-container relative">
+            <Routes>
+              <Route
+                path="/admin/"
+                element={<Navigate to="/admin/quiz" replace />}
+              />
+              <Route path="/admin/:currentPath" element={<Admin />} />
+              <Route path="/*" element={<WaitingRoom />} />
 
-            <Route path="/room/:roomId" element={<Room />} />
-            <Route path="/room/:roomId/team/:teamId" element={<Experiment />} />
+              <Route path="/room/:roomId" element={<Room />} />
+              <Route
+                path="/room/:roomId/team/:teamId"
+                element={<Experiment />}
+              />
 
-            <Route path="/quiz/:quizId/judgement" element={<JudgementDay />} />
-          </Routes>
-        </section>
+              <Route
+                path="/quiz/:quizId/judgement"
+                element={<JudgementDay />}
+              />
+            </Routes>
+          </section>
+        </ResultContext.Provider>
       </QuizContext.Provider>
     </>
   );
