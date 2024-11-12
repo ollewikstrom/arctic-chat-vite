@@ -20,7 +20,7 @@ export interface Judgement {
 
 export interface Question {
   id: string;
-  type: string;
+  theme: QuestionTheme;
   content: string;
 }
 export interface Team {
@@ -59,5 +59,5 @@ export interface EndGameObject {
 
 export interface QuestionTheme {
   id: string;
-  theme: string;
+  name: string;
 }

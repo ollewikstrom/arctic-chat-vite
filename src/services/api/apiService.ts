@@ -131,12 +131,13 @@ export const removeQuiz = async (quiz: Quiz) => {
   return res;
 };
 
-export const getAllQuestions = async () => {
+export const getAllQuestions = async (theme: QuestionTheme) => {
   const res = await fetch(baseUrl + "/api/getQuestions", {
-    method: "GET",
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
+    body: JSON.stringify(theme),
   })
     .then((res) => res.json())
     .catch((error) => {
@@ -207,7 +208,7 @@ export const addTheme = async (theme: QuestionTheme) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ theme }),
+    body: JSON.stringify({ id: theme.id, name: theme.name }),
   });
 };
 

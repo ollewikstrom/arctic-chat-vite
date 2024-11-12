@@ -7,6 +7,7 @@ import {
   getAllQuestions,
   getJudges,
   getQuizes,
+  getThemes,
   removeQuiz,
 } from "../../../services/api/apiService";
 import Loader from "../../../components/Loader";
@@ -15,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { QuizContext } from "../../../App";
 
 export default function CreateQuiz() {
+  //Quiz context contains "quiz" state and "setQuiz" function
   const quizContext = useContext(QuizContext);
   if (!quizContext) {
     throw new Error("Quiz context is not defined");
@@ -22,28 +24,40 @@ export default function CreateQuiz() {
 
   const navigate = useNavigate();
 
+  //Loading states
   const [pageLoading, setIsPageLoading] = useState(false);
   const [updateQuizLoading, setUpdateQuizLoading] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  //State for fetched data
   const [judges, setJudges] = useState<Judge[]>();
   const [quizes, setQuizes] = useState<Quiz[]>();
   const [questions, setQuestions] = useState<Question[]>();
+
+  //Setting up state for questions
   const [numOfQuestions, setNumOfQuestions] = useState<number>(0);
   const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
   const [customQuestion, setCustomQuestion] = useState<string>("");
-  const [selectedTheme, setSelectedTheme] = useState<QuestionTheme>({
+  const [themeIsSet, setThemeIsSet] = useState<boolean>(false);
+
+  //Setting up state for question themes
+  const defaultTheme: QuestionTheme = {
     id: "",
-    theme: "Välj ett tema",
-  });
+    name: "Välj ett tema",
+  };
+  const [selectedTheme, setSelectedTheme] =
+    useState<QuestionTheme>(defaultTheme);
   const [newThemeName, setNewThemeName] = useState<string>("");
   const [questionThemes, setQuestionThemes] = useState<QuestionTheme[]>([]);
 
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
+  //Refs for modals
   const modalRefs = useRef<Map<string, HTMLDialogElement>>(new Map());
   const gradingModalRef = useRef<HTMLDialogElement>(null);
   const questionThemesRef = useRef<HTMLDialogElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const [currGradingquiz, setCurrGradingQuiz] = useState<Quiz>();
+
+  const handleQuizFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setUpdateQuizLoading(true);
     e.preventDefault();
     const form = e.currentTarget;
@@ -105,7 +119,7 @@ export default function CreateQuiz() {
     }
     const newTheme: QuestionTheme = {
       id: uuidv4(),
-      theme: newThemeName,
+      name: newThemeName,
     };
     setQuestionThemes([...questionThemes, newTheme]);
     questionThemesRef.current?.close();
@@ -116,7 +130,7 @@ export default function CreateQuiz() {
     const newQuestion = {
       id: uuidv4(),
       content: customQuestion,
-      type: "question",
+      theme: selectedTheme,
     };
 
     setSelectedQuestions([...selectedQuestions, newQuestion]);
@@ -129,12 +143,13 @@ export default function CreateQuiz() {
     alert("Avslutar quiz " + quiz);
   };
 
-  const handleGradingQuiz = (quiz: Quiz) => {
+  const handleGradingQuiz = async (quiz: Quiz) => {
     // const result = confirm("Vill du rätta quiz " + quiz.name + "?");
     // if (!result) {
     //   return;
     // }
     gradingModalRef.current?.showModal();
+    setCurrGradingQuiz(quiz);
 
     //Set the global quiz state
     quizContext.setQuiz(quiz);
@@ -144,18 +159,14 @@ export default function CreateQuiz() {
 
   const handleRemoveQuiz = async (quiz: Quiz) => {
     const result = confirm("Vill du verkligen ta bort quiz " + quiz.name + "?");
-
     const name = quiz.name;
-
     if (!result) {
       return;
     }
-
     // Remove quiz from list
     const newQuizes = quizes?.filter((q) => q.id !== quiz.id);
     setQuizes(newQuizes);
 
-    // Remove quiz from database
     const res = await removeQuiz(quiz);
 
     if (res.status === 200) {
@@ -164,6 +175,8 @@ export default function CreateQuiz() {
       alert("Något gick fel: " + res.status + " " + res.statusText);
     }
   };
+
+  //Fetching data from the API
 
   const fetchJudges = async () => {
     setIsPageLoading(true);
@@ -180,16 +193,25 @@ export default function CreateQuiz() {
     setIsPageLoading(false);
   };
   const fetchQuestions = async () => {
-    setIsPageLoading(true);
-    const questions = await getAllQuestions();
-    setQuestions(questions);
     setIsPageLoading(false);
+    const questions = await getAllQuestions(selectedTheme);
+    setQuestions(questions);
   };
-  // useEffect(() => {
-  //   fetchJudges();
-  //   fetchQuizes();
-  //   fetchQuestions();
-  // }, []);
+
+  const fetchThemes = async () => {
+    const themes = await getThemes();
+    setQuestionThemes(themes);
+  };
+  useEffect(() => {
+    fetchJudges();
+    fetchQuizes();
+    fetchThemes();
+  }, []);
+
+  useEffect(() => {
+    console.log("Selected theme changed");
+    fetchQuestions();
+  }, [selectedTheme]);
 
   return (
     <>
@@ -263,7 +285,7 @@ export default function CreateQuiz() {
                           </button>
                         </div>
                       </p>
-                      {/* Open the modal using document.getElementById('ID').showModal() method */}
+
                       <button
                         className="btn"
                         onClick={() => handleModalOpen(quiz.id)}
@@ -332,7 +354,7 @@ export default function CreateQuiz() {
                     ✕
                   </button>
                 </form>
-                <h3 className="font-bold text-lg">Hello!</h3>
+                <h3 className="font-bold text-lg">Rättning av quiz</h3>
                 <p className="py-4">Click the button below to close</p>
                 <div className="modal-action"></div>
               </div>
@@ -349,7 +371,7 @@ export default function CreateQuiz() {
               ) : (
                 <form
                   className="flex flex-col gap-8 bg-secondary items-center p-6 rounded-md max-w-xl w-full border-2 shadow-lg"
-                  onSubmit={handleSubmit}
+                  onSubmit={handleQuizFormSubmit}
                 >
                   <h3 className="text-2xl font-bold">Skapa quiz</h3>
                   <div className="flex justify-between w-full gap-4">
@@ -378,18 +400,19 @@ export default function CreateQuiz() {
                       open={isDropdownOpen}
                     >
                       <summary className="btn m-1 w-full">
-                        {selectedTheme.theme}
+                        {selectedTheme.name}
                       </summary>
                       <ul className="menu dropdown-content bg-base-100 rounded-box z-[1] w-full p-2 shadow">
                         {questionThemes.map((theme) => (
                           <li key={theme.id}>
                             <a
                               onClick={() => {
-                                setSelectedTheme(theme);
-                                setIsDropdownOpen(false);
+                                setSelectedTheme(() => theme);
+                                setThemeIsSet(true);
+                                setIsDropdownOpen(() => false);
                               }}
                             >
-                              {theme.theme}
+                              {theme.name}
                             </a>
                           </li>
                         ))}
@@ -441,6 +464,7 @@ export default function CreateQuiz() {
                   <select
                     className="select select-bordered w-full max-w-lg drop-shadow-lg"
                     name="judge"
+                    disabled={!themeIsSet}
                   >
                     <option disabled selected>
                       Domare
@@ -484,7 +508,15 @@ export default function CreateQuiz() {
                       ))}
                     </ul>
                     <div className="divider w-full"></div>
-                    <details className="dropdown w-full">
+                    <details
+                      className={
+                        "dropdown w-full" +
+                        (themeIsSet === false
+                          ? " btn-disabled opacity-50"
+                          : " ")
+                      }
+                      aria-disabled={!themeIsSet}
+                    >
                       <summary className="btn m-1 w-full">Välj frågor!</summary>
                       <ul className="menu dropdown-content bg-base-100 rounded-box gap-2 z-[1] p-2 shadow w-full">
                         {questions === undefined &&
@@ -520,14 +552,21 @@ export default function CreateQuiz() {
                         )}
                       </ul>
                     </details>
-                    <label className="input input-bordered flex items-center gap-2 drop-shadow-lg w-full">
+                    <label
+                      className={
+                        "input input-bordered flex items-center gap-2 drop-shadow-lg w-full" +
+                        (!themeIsSet ? " opacity-50" : "")
+                      }
+                    >
                       <input
                         type="text"
-                        className="grow"
+                        className={"grow"}
                         placeholder="Lägg till en ny fråga"
                         name="name"
+                        autoComplete="off"
                         onChange={(e) => setCustomQuestion(e.target.value)}
                         value={customQuestion}
+                        disabled={!themeIsSet}
                       />
                       <button
                         type="button"

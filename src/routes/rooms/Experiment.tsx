@@ -103,11 +103,7 @@ export default function Experiment() {
     setTeam(currentTeam);
     setTeamName(currentTeam?.name || "");
     console.log(currentTeam);
-    setAssistentRules([
-      "Assistenten ska kunna svara på frågor",
-      "Assistenten ska kunna ge förslag på aktiviteter",
-      "Assistenten ska kunna ge förslag på maträtter",
-    ]);
+    setAssistentRules(quizContext?.quiz?.judge.demands || []);
   }, []);
 
   return (
