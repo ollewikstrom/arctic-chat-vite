@@ -17,7 +17,6 @@ import Loader from "../../../components/Loader";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
 import { QuizContext, ResultContext } from "../../../App";
-import { testAnswers } from "./testAnswers";
 
 export default function CreateQuiz() {
   //Quiz context contains "quiz" state and "setQuiz" function
@@ -157,19 +156,22 @@ export default function CreateQuiz() {
     // if (!result) {
     //   return;
     // }
+    setCurrGradingQuiz(quiz);
     setGradingLoading(true);
     gradingModalRef.current?.showModal();
     setCurrGradingQuiz(quiz);
     setGradingResults(["Rättar quiz " + quiz.name + "..."]);
     setGradingResults(["Hämtar alla lag..."]);
-    // const teams = await getTeamsForQuiz(quiz.id);
+    const teams = await getTeamsForQuiz(quiz.id);
     setGradingResults(["Hämtar svar för alla lag..."]);
 
-    // const answers = await getAnswersForAllTeams(quiz.questions, teams);
+    const answers = await getAnswersForAllTeams(quiz.questions, teams);
     setGradingResults([quiz.judge.name + " rättar alla lag..."]);
-    // resultContext?.setResults({ answers, judgements: [] });
-    const judgedAnswer = await judgeAnswers(testAnswers, quiz.judge);
-    console.log(judgedAnswer);
+    const judgedAnswer = await judgeAnswers(answers, quiz.judge);
+    setGradingResults((prev) => [...(prev || []), "Rättning klar"]);
+    resultContext?.setResults({ answers: answers, judgements: judgedAnswer });
+
+    setGradingLoading(false);
 
     //Set the global quiz state
   };
@@ -375,7 +377,16 @@ export default function CreateQuiz() {
                     <li key={result}>{result}</li>
                   ))}
                 </ul>
-                {gradingLoading && <Loader />}
+                {gradingLoading ? (
+                  <Loader />
+                ) : (
+                  <button
+                    className="btn bg-red-600"
+                    onClick={() => handleShowResults(currGradingquiz as Quiz)}
+                  >
+                    Visa Resultat
+                  </button>
+                )}
                 <h3 className="font-bold text-lg">Rättning av quiz</h3>
                 <p className="py-4">Click the button below to close</p>
                 <div className="modal-action"></div>

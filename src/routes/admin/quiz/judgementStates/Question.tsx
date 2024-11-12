@@ -4,7 +4,7 @@ export default function QuestionState({
   question,
   questionIndex,
 }: {
-  question: Question;
+  question: Question | null;
   questionIndex: number;
 }) {
   return (
@@ -12,7 +12,7 @@ export default function QuestionState({
       <h1 className="text-4xl font-josefin font-bold">
         Fråga {questionIndex + 1}
       </h1>
-      <p>{question.content}</p>
+      <p>{question?.content}</p>
     </section>
   );
 }

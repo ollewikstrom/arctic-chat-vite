@@ -33,6 +33,8 @@ export default function Experiment() {
     //Ska hela lag-profilen skickas in i updateTeam? Eller det kanske räcker med updaterade fält?
     e.preventDefault();
     setMessages([]);
+
+    //Behöver vi uppdatera prompten här eller ska den uppdateras hela tiden när man skriver?
     const form = e.currentTarget;
     const formData = new FormData(form);
     const prompt = formData.get("prompt") as string;
