@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Start from "./judgementStates/Start";
 import QuestionState from "./judgementStates/Question";
@@ -13,6 +13,7 @@ enum FlowState {
   Start,
   Question,
   Scores,
+  End,
 }
 
 export default function JudgementDay() {
@@ -67,6 +68,11 @@ export default function JudgementDay() {
   };
 
   const handleNextButton = () => {
+    if (currentQuestionIndex === questions.length - 1) {
+      console.log("Hello");
+      setFlowState(FlowState.End);
+      return;
+    }
     if (flowState === FlowState.Question) {
       if (!showAnswers) {
         setShowAnswers(true);
@@ -77,10 +83,11 @@ export default function JudgementDay() {
         return;
       }
       if (currentQuestionIndex < questions.length - 1) {
+        console.log("Nu ska det gå upp med 1");
         setCurrentQuestionIndex(currentQuestionIndex + 1);
+        setFlowState(FlowState.Scores);
         return;
       }
-      setFlowState(FlowState.Scores);
     }
     if (flowState === FlowState.Start) {
       setFlowState(FlowState.Question);
@@ -90,9 +97,18 @@ export default function JudgementDay() {
       setShowAnswers(false);
       setShowMotivation(false);
     }
+    console.log("Current question index " + currentQuestionIndex);
   };
 
-  //Fetch teams and questions and motivation from the backend
+  useEffect(() => {
+    if (quizContext.quiz) {
+      setQuestions(quizContext.quiz.questions);
+      setTeams(quizContext.quiz.teams);
+    }
+    console.log("Quiz context" + quizContext.quiz.teams);
+  }, [quizContext]);
+
+  //Set teams and questions and motivation from the context
 
   return (
     <section className="flex-container items-center h-container overflow-y-auto">
@@ -118,7 +134,7 @@ export default function JudgementDay() {
           {flowState === FlowState.Question && (
             <>
               <QuestionState
-                question={exampleQuestion}
+                question={questions[currentQuestionIndex]}
                 questionIndex={currentQuestionIndex}
               />
               {showAnswers && (
@@ -152,6 +168,7 @@ export default function JudgementDay() {
             </>
           )}
           {flowState === FlowState.Scores && <Scores />}
+          {flowState === FlowState.End && <h1>End</h1>}
         </>
       )}
     </section>
