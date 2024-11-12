@@ -1,8 +1,8 @@
 export interface Answer {
   id: string;
-  team: Team;
+  team: string;
   content: string;
-  question: string;
+  question: Question;
 }
 export interface Judge {
   id: number;
@@ -16,6 +16,7 @@ export interface Judgement {
   team: string;
   content: string;
   question: string;
+  score: number;
 }
 
 export interface Question {
@@ -24,6 +25,7 @@ export interface Question {
   content: string;
 }
 export interface Team {
+  quizId: string;
   id: string;
   name: string;
   prompt: string;
@@ -33,11 +35,11 @@ export interface Team {
 export interface Quiz {
   id: string;
   name: string;
-  teams: Team[];
   judge: Judge;
   questions: Question[];
   roomCode: string;
   isActive: boolean;
+  numberOfTeams: number;
 }
 
 export interface Message {

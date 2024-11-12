@@ -65,6 +65,17 @@ export const getQuizes = async () => {
   return res;
 };
 
+const addNewTeam = async (team: Team) => {
+  const res = await fetch(baseUrl + "/api/addTeam", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(team),
+  });
+  return res;
+};
+
 export const addQuiz = async ({
   name,
   numOfTeams,
@@ -76,22 +87,29 @@ export const addQuiz = async ({
   judge: Judge;
   questions: Question[];
 }) => {
+  const quizId = uuidv4();
+
+  const teams: Team[] = Array.from({ length: numOfTeams }).map((_, index) => {
+    return {
+      id: uuidv4(),
+      name: `Lag ${index + 1}`,
+      prompt: "",
+      score: 0,
+      color: getRandomTailWindBgColor(),
+      quizId,
+    };
+  });
+
+  await Promise.all(teams.map((team) => addNewTeam(team)));
+
   const newQuiz: Quiz = {
-    id: uuidv4(),
+    id: quizId,
     name,
-    teams: Array.from({ length: numOfTeams }).map((_, index) => {
-      return {
-        id: uuidv4(),
-        name: `Lag ${index + 1}`,
-        prompt: "",
-        score: 0,
-        color: getRandomTailWindBgColor(),
-      };
-    }),
     judge,
     questions,
     roomCode: makeRoomCode(6),
     isActive: true,
+    numberOfTeams: teams.length,
   };
 
   const res = await fetch(baseUrl + "/api/addQuiz", {
@@ -101,6 +119,21 @@ export const addQuiz = async ({
     },
     body: JSON.stringify(newQuiz),
   });
+  return res;
+};
+
+export const getTeamById = async (teamId: string) => {
+  const res = await fetch(baseUrl + "/api/getTeamById/?teamId=" + teamId, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((res) => res.json())
+    .catch((error) => {
+      console.log(error);
+      return [];
+    });
   return res;
 };
 
@@ -147,15 +180,12 @@ export const getAllQuestions = async (theme: QuestionTheme) => {
   return res;
 };
 
-export const getQuestionsTeamsAndAnswers = async (
-  quiz: Quiz
-): Promise<EndGameObject> => {
-  const res = await fetch(baseUrl + "/api/getQuestionsTeamsAndAnswers", {
-    method: "POST",
+export const getTeamsForQuiz = async (quizId: string) => {
+  const res = await fetch(baseUrl + "/api/getTeamsForQuiz/?quizId=" + quizId, {
+    method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(quiz),
   })
     .then((res) => res.json())
     .catch((error) => {
@@ -165,24 +195,31 @@ export const getQuestionsTeamsAndAnswers = async (
   return res;
 };
 
-export const updateTeam = async (team: Team) => {
+export const updateTeam = async (
+  team: Team,
+  prompt: string,
+  newName: string
+) => {
   const res = await fetch(baseUrl + "/api/updateTeam", {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(team),
+    body: JSON.stringify({ team, prompt, newName }),
   });
   return res;
 };
 
-export const getAnswersForAllTeams = async (quiz: Quiz) => {
+export const getAnswersForAllTeams = async (
+  questions: Question[],
+  teams: Team[]
+) => {
   const res = await fetch(baseUrl + "/api/getAnswersForAllTeams", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(quiz),
+    body: JSON.stringify({ questions, teams }),
   })
     .then((res) => res.json())
     .catch((error) => {
@@ -229,6 +266,19 @@ export const getThemes = async () => {
 
 //Den gamla koden
 
+export const judgeAnswers = async (answers: Answer[], judge: Judge) => {
+  const res = await fetch(baseUrl + "/api/judgeAnswers", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ answers, judge }),
+  }).then((response) => response.json());
+
+  console.log(res);
+  return res;
+};
+
 export const askQuestions = async (questions: Question[], team: Team) => {
   // const res = await Promise.all(
   //     teams.map(team => axios.post(baseUrl + "/api/Chat", { questions: questions, team: team }))
@@ -241,13 +291,6 @@ export const askQuestions = async (questions: Question[], team: Team) => {
     },
     body: JSON.stringify({ questions: questions, team: team }),
   }).then((response) => response.json());
-
-  console.log(res);
-};
-
-export const judgeAnswers = async (answers: Answer[]) => {
-  //const res = await axios.post("http://localhost:7247/api/judge", answers);
-  const res = await axios.post(baseUrl + "/api/judge", answers);
 
   console.log(res);
 };

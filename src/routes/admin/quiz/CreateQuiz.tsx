@@ -5,15 +5,18 @@ import {
   addQuiz,
   addTheme,
   getAllQuestions,
+  getAnswersForAllTeams,
   getJudges,
   getQuizes,
+  getTeamsForQuiz,
   getThemes,
+  judgeAnswers,
   removeQuiz,
 } from "../../../services/api/apiService";
 import Loader from "../../../components/Loader";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
-import { QuizContext } from "../../../App";
+import { QuizContext, ResultContext } from "../../../App";
 
 export default function CreateQuiz() {
   //Quiz context contains "quiz" state and "setQuiz" function
@@ -21,6 +24,7 @@ export default function CreateQuiz() {
   if (!quizContext) {
     throw new Error("Quiz context is not defined");
   }
+  const resultContext = useContext(ResultContext);
 
   const navigate = useNavigate();
 
@@ -40,6 +44,10 @@ export default function CreateQuiz() {
   const [customQuestion, setCustomQuestion] = useState<string>("");
   const [themeIsSet, setThemeIsSet] = useState<boolean>(false);
 
+  const [gradingResults, setGradingResults] = useState<string[]>();
+  const [gradingLoading, setGradingLoading] = useState<boolean>(false);
+  const [currGradingquiz, setCurrGradingQuiz] = useState<Quiz>();
+
   //Setting up state for question themes
   const defaultTheme: QuestionTheme = {
     id: "",
@@ -54,8 +62,6 @@ export default function CreateQuiz() {
   const modalRefs = useRef<Map<string, HTMLDialogElement>>(new Map());
   const gradingModalRef = useRef<HTMLDialogElement>(null);
   const questionThemesRef = useRef<HTMLDialogElement>(null);
-
-  const [currGradingquiz, setCurrGradingQuiz] = useState<Quiz>();
 
   const handleQuizFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setUpdateQuizLoading(true);
@@ -139,8 +145,10 @@ export default function CreateQuiz() {
     await addQuestion(newQuestion);
   };
 
-  const handleFinishButton = (quiz: string) => {
-    alert("Avslutar quiz " + quiz);
+  const handleShowResults = (quiz: Quiz) => {
+    quizContext.setQuiz(quiz);
+    //Navigate to the grading page
+    navigate("/quiz/" + quiz.id + "/judgement");
   };
 
   const handleGradingQuiz = async (quiz: Quiz) => {
@@ -148,13 +156,24 @@ export default function CreateQuiz() {
     // if (!result) {
     //   return;
     // }
+    setCurrGradingQuiz(quiz);
+    setGradingLoading(true);
     gradingModalRef.current?.showModal();
     setCurrGradingQuiz(quiz);
+    setGradingResults(["Rättar quiz " + quiz.name + "..."]);
+    setGradingResults(["Hämtar alla lag..."]);
+    const teams = await getTeamsForQuiz(quiz.id);
+    setGradingResults(["Hämtar svar för alla lag..."]);
+
+    const answers = await getAnswersForAllTeams(quiz.questions, teams);
+    setGradingResults([quiz.judge.name + " rättar alla lag..."]);
+    const judgedAnswer = await judgeAnswers(answers, quiz.judge);
+    setGradingResults((prev) => [...(prev || []), "Rättning klar"]);
+    resultContext?.setResults({ answers: answers, judgements: judgedAnswer });
+
+    setGradingLoading(false);
 
     //Set the global quiz state
-    quizContext.setQuiz(quiz);
-    //Navigate to the grading page
-    // navigate("/quiz/" + quiz.id + "/judgement");
   };
 
   const handleRemoveQuiz = async (quiz: Quiz) => {
@@ -163,14 +182,14 @@ export default function CreateQuiz() {
     if (!result) {
       return;
     }
-    // Remove quiz from list
-    const newQuizes = quizes?.filter((q) => q.id !== quiz.id);
-    setQuizes(newQuizes);
 
     const res = await removeQuiz(quiz);
 
     if (res.status === 200) {
       alert("Quiz " + name + " borttaget");
+      // Remove quiz from list
+      const newQuizes = quizes?.filter((q) => q.id !== quiz.id);
+      setQuizes(newQuizes);
     } else {
       alert("Något gick fel: " + res.status + " " + res.statusText);
     }
@@ -193,9 +212,8 @@ export default function CreateQuiz() {
     setIsPageLoading(false);
   };
   const fetchQuestions = async () => {
-    setIsPageLoading(false);
     const questions = await getAllQuestions(selectedTheme);
-    setQuestions(questions);
+    setSelectedQuestions(questions);
   };
 
   const fetchThemes = async () => {
@@ -241,17 +259,17 @@ export default function CreateQuiz() {
                 <span>Inga aktiva quiz</span>
               </div>
             ) : (
-              <ul className=" list-decimal list-inside flex flex-col gap-2">
+              <ul className=" list-decimal list-inside flex flex-col gap-4">
                 {quizes.map((quiz) => (
                   <div
-                    className="card bg-base-100 w-96 shadow-xl border-2 relative"
+                    className="card bg-base-100 max-w-3xl shadow-xl border-2 relative"
                     key={quiz.id}
                   >
                     <div className="card-body">
-                      <h2 className="card-title">{quiz.name}</h2>
+                      <h2 className="card-title max-w-lg">{quiz.name}</h2>
                       <p>
                         <span className="font-bold">Domare: </span>
-                        {quiz.judge.name}
+                        {quiz.judge.name || "Ingen domare"}
                       </p>
                       <button
                         className="btn btn-warning absolute right-5 top-5"
@@ -261,7 +279,7 @@ export default function CreateQuiz() {
                       </button>
                       <p>
                         <span className="font-bold">Antal lag: </span>
-                        {quiz.teams.length}
+                        {quiz.numberOfTeams}
                       </p>
                       <p className="flex gap-2 items-center italic">
                         <span className="font-bold">Kod: </span>
@@ -335,7 +353,7 @@ export default function CreateQuiz() {
                           <button
                             className="btn bg-red-600"
                             disabled={quiz.isActive}
-                            onClick={() => handleFinishButton(quiz.id)}
+                            onClick={() => handleShowResults(quiz)}
                           >
                             Visa Resultat
                           </button>
@@ -354,6 +372,21 @@ export default function CreateQuiz() {
                     ✕
                   </button>
                 </form>
+                <ul>
+                  {gradingResults?.map((result) => (
+                    <li key={result}>{result}</li>
+                  ))}
+                </ul>
+                {gradingLoading ? (
+                  <Loader />
+                ) : (
+                  <button
+                    className="btn bg-red-600"
+                    onClick={() => handleShowResults(currGradingquiz as Quiz)}
+                  >
+                    Visa Resultat
+                  </button>
+                )}
                 <h3 className="font-bold text-lg">Rättning av quiz</h3>
                 <p className="py-4">Click the button below to close</p>
                 <div className="modal-action"></div>
@@ -361,7 +394,7 @@ export default function CreateQuiz() {
             </dialog>
           </section>
           <section className="col-span-1 w-full flex-container">
-            <h2 className="text-4xl font-bold text-black">
+            <h2 className="text-4xl font-bold text-white">
               Skapa ett nytt quiz
             </h2>
 
@@ -370,7 +403,7 @@ export default function CreateQuiz() {
                 <Loader />
               ) : (
                 <form
-                  className="flex flex-col gap-8 bg-secondary items-center p-6 rounded-md max-w-xl w-full border-2 shadow-lg"
+                  className="flex flex-col gap-8 bg-secondary items-center p-6 rounded-md max-w-3xl w-full border-2 shadow-lg"
                   onSubmit={handleQuizFormSubmit}
                 >
                   <h3 className="text-2xl font-bold">Skapa quiz</h3>

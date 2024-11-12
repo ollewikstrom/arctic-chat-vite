@@ -12,7 +12,7 @@ export function ToMessage({ message }: { message: Message }) {
   }, []);
 
   return (
-    <div ref={ref} className="chat chat-end">
+    <div ref={ref} className="chat chat-end text-black">
       <div className="chat-header">{message.sender}</div>
       <div className="chat-bubble chat-bubble-primary">{message.message}</div>
     </div>
@@ -28,7 +28,7 @@ export function FromMessage({ message }: { message: Message }) {
     }
   }, []);
   return (
-    <div ref={ref} className="chat chat-start">
+    <div ref={ref} className="chat chat-start text-black">
       <div className="chat-header">{message.sender}</div>
       <div className="chat-bubble chat-bubble-secondary">
         <pre className="break-words w-full whitespace-pre-wrap font-inter">
@@ -48,7 +48,7 @@ export function LoadingFromMessage({ teamName }: { teamName: string }) {
     }
   }, []);
   return (
-    <div ref={ref} className="chat chat-start">
+    <div ref={ref} className="chat chat-start text-black">
       <div className="chat-header">{teamName}'s bot</div>
       <div className="chat-bubble chat-bubble-secondary">
         <pre className="break-words w-full whitespace-pre-wrap font-inter">

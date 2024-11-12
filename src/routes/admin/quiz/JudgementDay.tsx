@@ -5,9 +5,9 @@ import QuestionState from "./judgementStates/Question";
 import { Answer, Judgement, Question, Team } from "../../../utils/types";
 import AnswerCard from "../../../components/admin/quiz/Answer";
 import Scores from "./judgementStates/Scores";
-import { QuizContext } from "../../../App";
-
-// const judgementContext = createContext<JudgementContextType | null>(null);
+import { QuizContext, ResultContext } from "../../../App";
+import { getTeamsForQuiz } from "../../../services/api/apiService";
+import Loader from "../../../components/Loader";
 
 enum FlowState {
   Start,
@@ -15,46 +15,51 @@ enum FlowState {
   Scores,
   End,
 }
+export const synthwaveColors = [
+  "#ff5e99", // Neon Pink
+  "#ff76d7", // Bright Magenta
+  "#9e51ff", // Purple
+  "#5c4bfe", // Deep Violet
+  "#4832e4", // Electric Blue
+  "#2d1b8f", // Dark Purple
+  "#18ffff", // Cyan
+  "#00e5ff", // Light Neon Blue
+  "#e0ff26", // Neon Yellow
+  "#ff9100", // Neon Orange
+  "#ff1744", // Bright Red
+  "#282a36", // Dark Background (Base Color)
+  "#1a1a2e", // Midnight Background
+  "#000000", // Pure Black
+];
 
 export default function JudgementDay() {
   const quizContext = useContext(QuizContext);
   if (!quizContext) {
     throw new Error("Quiz context is not defined");
   }
+  const resultContext = useContext(ResultContext);
+  if (!resultContext) {
+    throw new Error("Result context is not defined");
+  }
 
   const [flowState, setFlowState] = useState<FlowState>(FlowState.Start);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [judgements, setJudgements] = useState<Judgement[] | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [showAnswers, setShowAnswers] = useState<boolean>(false);
   const [showMotivation, setShowMotivation] = useState<boolean>(false);
 
-  const exampleQuestion: Question = {
-    id: "abc123",
-    type: "question",
-    content: "Hi, what is your name?",
-  };
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [answers, setAnswers] = useState<Answer[]>([]);
+  const [judgements, setJudgements] = useState<Judgement[]>([]);
 
-  const exampleTeam: Team = {
-    id: "abc123",
-    name: "Team 1",
-    prompt: "Prompt 1",
-    score: 0,
-    color: "#000000",
-  };
-
-  const exampleAnswer: Answer = {
-    id: "abc123",
-    team: exampleTeam,
-    content: "lorem25",
-    question: "abc123",
-  };
+  const [teamScores, setTeamScores] = useState<
+    { team: string; scores: number[]; teamColor: string }[]
+  >([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const handleBackButton = () => {
-    if (flowState === FlowState.Start) {
-      return;
-    }
+    if (flowState === FlowState.Start) return;
     if (flowState === FlowState.Question) {
       if (currentQuestionIndex > 0) {
         setCurrentQuestionIndex(currentQuestionIndex - 1);
@@ -69,7 +74,6 @@ export default function JudgementDay() {
 
   const handleNextButton = () => {
     if (currentQuestionIndex === questions.length - 1) {
-      console.log("Hello");
       setFlowState(FlowState.End);
       return;
     }
@@ -83,7 +87,6 @@ export default function JudgementDay() {
         return;
       }
       if (currentQuestionIndex < questions.length - 1) {
-        console.log("Nu ska det gå upp med 1");
         setCurrentQuestionIndex(currentQuestionIndex + 1);
         setFlowState(FlowState.Scores);
         return;
@@ -97,18 +100,78 @@ export default function JudgementDay() {
       setShowAnswers(false);
       setShowMotivation(false);
     }
-    console.log("Current question index " + currentQuestionIndex);
   };
 
+  // Fetch and initialize quiz data
   useEffect(() => {
-    if (quizContext.quiz) {
+    const fetchTeams = async () => {
+      if (!quizContext.quiz) return;
       setQuestions(quizContext.quiz.questions);
-      setTeams(quizContext.quiz.teams);
-    }
-    console.log("Quiz context" + quizContext.quiz.teams);
+      const res = await getTeamsForQuiz(quizContext.quiz.id);
+      setTeams(res);
+      setAnswers(resultContext.results?.answers || []);
+      setJudgements(resultContext.results?.judgements || []);
+
+      const initialScores = res.map((team: Team) => ({
+        team: team.name,
+        scores: [0],
+        teamColor: synthwaveColors[res.indexOf(team) % synthwaveColors.length],
+      }));
+      setTeamScores(initialScores);
+      setIsLoading(false);
+    };
+    fetchTeams();
   }, [quizContext]);
 
-  //Set teams and questions and motivation from the context
+  useEffect(() => {
+    setCurrentQuestion(questions[currentQuestionIndex]);
+  }, [currentQuestionIndex, questions]);
+
+  useEffect(() => {
+    console.log("Answers ");
+    console.table(answers);
+    const test = teams.find((team) => team.name === answers[0]?.team);
+    console.log("Test");
+    console.log(test);
+  }, [answers, judgements]);
+
+  useEffect(() => {
+    const updateScores = () => {
+      // Copy of the teamScores array to modify locally
+      const newScores = teamScores.map((score) => ({ ...score }));
+
+      // Filter judgments for the current question
+      const currentQuestionJudgements = judgements.filter(
+        (judgement) =>
+          judgement.question === questions[currentQuestionIndex]?.id
+      );
+
+      // Update scores based on judgments
+      currentQuestionJudgements.forEach((judgement) => {
+        const teamScore = newScores.find(
+          (score) => score.team === judgement.team
+        );
+        if (teamScore) {
+          teamScore.scores.push(judgement.score);
+        }
+      });
+
+      // Only update teamScores if there are changes
+      setTeamScores((prevScores) => {
+        const isScoreChanged = newScores.some((newScore, index) => {
+          return newScore.scores.some(
+            (score, scoreIndex) =>
+              score !== prevScores[index]?.scores[scoreIndex]
+          );
+        });
+
+        // If there's a change, update the teamScores
+        return isScoreChanged ? newScores : prevScores;
+      });
+    };
+
+    updateScores();
+  }, [currentQuestionIndex]);
 
   return (
     <section className="flex-container items-center h-container overflow-y-auto">
@@ -120,12 +183,14 @@ export default function JudgementDay() {
           Nästa
         </button>
       </nav>
-      {quizContext && (
+      {isLoading ? (
+        <Loader />
+      ) : (
         <>
           {quizContext.quiz ? (
             <>
               {flowState === FlowState.Start && (
-                <Start quiz={quizContext.quiz} />
+                <Start teams={teams} quizName={quizContext.quiz.name} />
               )}
             </>
           ) : (
@@ -134,40 +199,47 @@ export default function JudgementDay() {
           {flowState === FlowState.Question && (
             <>
               <QuestionState
-                question={questions[currentQuestionIndex]}
+                question={currentQuestion}
                 questionIndex={currentQuestionIndex}
               />
               {showAnswers && (
                 <ul className="flex flex-wrap gap-4 justify-between">
-                  <AnswerCard
-                    answer={exampleAnswer}
-                    showMotivation={showMotivation}
-                  />
-                  <AnswerCard
-                    answer={exampleAnswer}
-                    showMotivation={showMotivation}
-                  />
-                  <AnswerCard
-                    answer={exampleAnswer}
-                    showMotivation={showMotivation}
-                  />
-                  <AnswerCard
-                    answer={exampleAnswer}
-                    showMotivation={showMotivation}
-                  />
-                  <AnswerCard
-                    answer={exampleAnswer}
-                    showMotivation={showMotivation}
-                  />
-                  <AnswerCard
-                    answer={exampleAnswer}
-                    showMotivation={showMotivation}
-                  />
+                  {answers
+                    .filter(
+                      (answer) => answer.question.id === currentQuestion?.id
+                    )
+                    .map((answer) => (
+                      <li key={answer.id}>
+                        <AnswerCard
+                          answer={answer}
+                          judgement={
+                            judgements.find(
+                              (judgement) =>
+                                judgement.question === answer.question.id &&
+                                judgement.team === answer.team
+                            ) || {
+                              id: "",
+                              team: "",
+                              content: "",
+                              question: "",
+                              score: 0,
+                            }
+                          }
+                          teamName={
+                            teams.find((team) => team.name === answer.team)
+                              ?.name || "Lag saknas"
+                          }
+                          showMotivation={showMotivation}
+                        />
+                      </li>
+                    ))}
                 </ul>
               )}
             </>
           )}
-          {flowState === FlowState.Scores && <Scores />}
+          {flowState === FlowState.Scores && (
+            <Scores teamScores={teamScores} amtQuestions={questions.length} />
+          )}
           {flowState === FlowState.End && <h1>End</h1>}
         </>
       )}
