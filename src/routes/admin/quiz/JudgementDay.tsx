@@ -2,12 +2,19 @@ import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Start from "./judgementStates/Start";
 import QuestionState from "./judgementStates/Question";
-import { Answer, Judgement, Question, Team } from "../../../utils/types";
+import {
+  Answer,
+  Judgement,
+  Question,
+  Team,
+  TeamScore,
+} from "../../../utils/types";
 import AnswerCard from "../../../components/admin/quiz/Answer";
 import Scores from "./judgementStates/Scores";
 import { QuizContext, ResultContext } from "../../../App";
 import { getTeamsForQuiz } from "../../../services/api/apiService";
 import Loader from "../../../components/Loader";
+import EndState from "./judgementStates/EndState";
 
 enum FlowState {
   Start,
@@ -15,22 +22,46 @@ enum FlowState {
   Scores,
   End,
 }
-export const synthwaveColors = [
-  "#ff5e99", // Neon Pink
-  "#ff76d7", // Bright Magenta
-  "#9e51ff", // Purple
-  "#5c4bfe", // Deep Violet
-  "#4832e4", // Electric Blue
-  "#2d1b8f", // Dark Purple
-  "#18ffff", // Cyan
-  "#00e5ff", // Light Neon Blue
-  "#e0ff26", // Neon Yellow
-  "#ff9100", // Neon Orange
-  "#ff1744", // Bright Red
-  "#282a36", // Dark Background (Base Color)
-  "#1a1a2e", // Midnight Background
-  "#000000", // Pure Black
+
+const exampleTeamScores: TeamScore[] = [
+  {
+    team: "Team 1",
+    scores: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    teamColor: "#ff5e99",
+  },
+  {
+    team: "Team 2",
+    scores: [0, 3, 2, 8, 4, 4, 6, 9, 8, 2],
+    teamColor: "#ff76d7",
+  },
+  {
+    team: "Team 3",
+    scores: [0, 7, 2, 8, 4, 2, 6, 2, 9, 9],
+    teamColor: "#9e51ff",
+  },
+  {
+    team: "Team 4",
+    scores: [0, 0, 5, 9, 3, 3, 6, 6, 6, 9],
+    teamColor: "#5c4bfe",
+  },
 ];
+
+// export const synthwaveColors = [
+//   "#ff5e99", // Neon Pink
+//   "#ff76d7", // Bright Magenta
+//   "#9e51ff", // Purple
+//   "#5c4bfe", // Deep Violet
+//   "#4832e4", // Electric Blue
+//   "#2d1b8f", // Dark Purple
+//   "#18ffff", // Cyan
+//   "#00e5ff", // Light Neon Blue
+//   "#e0ff26", // Neon Yellow
+//   "#ff9100", // Neon Orange
+//   "#ff1744", // Bright Red
+//   "#282a36", // Dark Background (Base Color)
+//   "#1a1a2e", // Midnight Background
+//   "#000000", // Pure Black
+// ];
 
 export default function JudgementDay() {
   const quizContext = useContext(QuizContext);
@@ -42,7 +73,7 @@ export default function JudgementDay() {
     throw new Error("Result context is not defined");
   }
 
-  const [flowState, setFlowState] = useState<FlowState>(FlowState.Start);
+  const [flowState, setFlowState] = useState<FlowState>(FlowState.End);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [showAnswers, setShowAnswers] = useState<boolean>(false);
@@ -53,9 +84,7 @@ export default function JudgementDay() {
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [judgements, setJudgements] = useState<Judgement[]>([]);
 
-  const [teamScores, setTeamScores] = useState<
-    { team: string; scores: number[]; teamColor: string }[]
-  >([]);
+  const [teamScores, setTeamScores] = useState<TeamScore[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const handleBackButton = () => {
@@ -103,75 +132,75 @@ export default function JudgementDay() {
   };
 
   // Fetch and initialize quiz data
-  useEffect(() => {
-    const fetchTeams = async () => {
-      if (!quizContext.quiz) return;
-      setQuestions(quizContext.quiz.questions);
-      const res = await getTeamsForQuiz(quizContext.quiz.id);
-      setTeams(res);
-      setAnswers(resultContext.results?.answers || []);
-      setJudgements(resultContext.results?.judgements || []);
+  // useEffect(() => {
+  //   const fetchTeams = async () => {
+  //     if (!quizContext.quiz) return;
+  //     setQuestions(quizContext.quiz.questions);
+  //     const res = await getTeamsForQuiz(quizContext.quiz.id);
+  //     setTeams(res);
+  //     setAnswers(resultContext.results?.answers || []);
+  //     setJudgements(resultContext.results?.judgements || []);
 
-      const initialScores = res.map((team: Team) => ({
-        team: team.name,
-        scores: [0],
-        teamColor: synthwaveColors[res.indexOf(team) % synthwaveColors.length],
-      }));
-      setTeamScores(initialScores);
-      setIsLoading(false);
-    };
-    fetchTeams();
-  }, [quizContext]);
+  //     const initialScores = res.map((team: Team) => ({
+  //       team: team.name,
+  //       scores: [0],
+  //       teamColor: synthwaveColors[res.indexOf(team) % synthwaveColors.length],
+  //     }));
+  //     setTeamScores(initialScores);
+  //     setIsLoading(false);
+  //   };
+  //   fetchTeams();
+  // }, [quizContext]);
 
-  useEffect(() => {
-    setCurrentQuestion(questions[currentQuestionIndex]);
-  }, [currentQuestionIndex, questions]);
+  // useEffect(() => {
+  //   setCurrentQuestion(questions[currentQuestionIndex]);
+  // }, [currentQuestionIndex, questions]);
 
-  useEffect(() => {
-    console.log("Answers ");
-    console.table(answers);
-    const test = teams.find((team) => team.name === answers[0]?.team);
-    console.log("Test");
-    console.log(test);
-  }, [answers, judgements]);
+  // useEffect(() => {
+  //   console.log("Answers ");
+  //   console.table(answers);
+  //   const test = teams.find((team) => team.name === answers[0]?.team);
+  //   console.log("Test");
+  //   console.log(test);
+  // }, [answers, judgements]);
 
-  useEffect(() => {
-    const updateScores = () => {
-      // Copy of the teamScores array to modify locally
-      const newScores = teamScores.map((score) => ({ ...score }));
+  // useEffect(() => {
+  //   const updateScores = () => {
+  //     // Copy of the teamScores array to modify locally
+  //     const newScores = teamScores.map((score) => ({ ...score }));
 
-      // Filter judgments for the current question
-      const currentQuestionJudgements = judgements.filter(
-        (judgement) =>
-          judgement.question === questions[currentQuestionIndex]?.id
-      );
+  //     // Filter judgments for the current question
+  //     const currentQuestionJudgements = judgements.filter(
+  //       (judgement) =>
+  //         judgement.question === questions[currentQuestionIndex]?.id
+  //     );
 
-      // Update scores based on judgments
-      currentQuestionJudgements.forEach((judgement) => {
-        const teamScore = newScores.find(
-          (score) => score.team === judgement.team
-        );
-        if (teamScore) {
-          teamScore.scores.push(judgement.score);
-        }
-      });
+  //     // Update scores based on judgments
+  //     currentQuestionJudgements.forEach((judgement) => {
+  //       const teamScore = newScores.find(
+  //         (score) => score.team === judgement.team
+  //       );
+  //       if (teamScore) {
+  //         teamScore.scores.push(judgement.score);
+  //       }
+  //     });
 
-      // Only update teamScores if there are changes
-      setTeamScores((prevScores) => {
-        const isScoreChanged = newScores.some((newScore, index) => {
-          return newScore.scores.some(
-            (score, scoreIndex) =>
-              score !== prevScores[index]?.scores[scoreIndex]
-          );
-        });
+  //     // Only update teamScores if there are changes
+  //     setTeamScores((prevScores) => {
+  //       const isScoreChanged = newScores.some((newScore, index) => {
+  //         return newScore.scores.some(
+  //           (score, scoreIndex) =>
+  //             score !== prevScores[index]?.scores[scoreIndex]
+  //         );
+  //       });
 
-        // If there's a change, update the teamScores
-        return isScoreChanged ? newScores : prevScores;
-      });
-    };
+  //       // If there's a change, update the teamScores
+  //       return isScoreChanged ? newScores : prevScores;
+  //     });
+  //   };
 
-    updateScores();
-  }, [currentQuestionIndex]);
+  //   updateScores();
+  // }, [currentQuestionIndex]);
 
   return (
     <section className="flex-container items-center h-container overflow-y-auto">
@@ -184,10 +213,15 @@ export default function JudgementDay() {
         </button>
       </nav>
       {isLoading ? (
-        <Loader />
+        <>
+          {/* <Loader /> */}
+          {flowState === FlowState.End && (
+            <EndState teamScores={exampleTeamScores} amtQuestions={9} />
+          )}
+        </>
       ) : (
         <>
-          {quizContext.quiz ? (
+          {/* {quizContext.quiz ? (
             <>
               {flowState === FlowState.Start && (
                 <Start teams={teams} quizName={quizContext.quiz.name} />
@@ -240,7 +274,9 @@ export default function JudgementDay() {
           {flowState === FlowState.Scores && (
             <Scores teamScores={teamScores} amtQuestions={questions.length} />
           )}
-          {flowState === FlowState.End && <h1>End</h1>}
+          {flowState === FlowState.End && (
+            <EndState teamScores={teamScores} amtQuestions={questions.length} />
+          )} */}
         </>
       )}
     </section>
