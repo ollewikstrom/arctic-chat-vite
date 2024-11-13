@@ -264,6 +264,41 @@ export const getThemes = async () => {
   return res;
 };
 
+export const getGeneratedAnswers = async (
+  questions: Question[],
+  teams: Team[]
+) => {
+  const res = await fetch(baseUrl + "/api/getGeneratedAnswers", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ questions, teams }),
+  })
+    .then((res) => res.json())
+    .catch((error) => {
+      console.log(error);
+      return [];
+    });
+  return res;
+};
+
+export const getJudgements = async (teams: Team[]) => {
+  const res = await fetch(baseUrl + "/api/getJudgements", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ teams }),
+  })
+    .then((res) => res.json())
+    .catch((error) => {
+      console.log(error);
+      return [];
+    });
+  return res;
+};
+
 //Den gamla koden
 
 export const judgeAnswers = async (answers: Answer[], judge: Judge) => {

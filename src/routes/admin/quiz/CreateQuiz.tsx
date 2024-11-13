@@ -6,6 +6,8 @@ import {
   addTheme,
   getAllQuestions,
   getAnswersForAllTeams,
+  getGeneratedAnswers,
+  getJudgements,
   getJudges,
   getQuizes,
   getTeamsForQuiz,
@@ -47,6 +49,9 @@ export default function CreateQuiz() {
   const [gradingResults, setGradingResults] = useState<string[]>();
   const [gradingLoading, setGradingLoading] = useState<boolean>(false);
   const [currGradingquiz, setCurrGradingQuiz] = useState<Quiz>();
+
+  //For fetching generated answers and judgement
+  const resultsDialogRef = useRef<HTMLDialogElement>(null);
 
   //Setting up state for question themes
   const defaultTheme: QuestionTheme = {
@@ -193,6 +198,20 @@ export default function CreateQuiz() {
     } else {
       alert("Något gick fel: " + res.status + " " + res.statusText);
     }
+  };
+
+  const handleFetchStoredResults = async (quiz: Quiz) => {
+    resultsDialogRef.current?.showModal();
+    quizContext.setQuiz(quiz);
+    const teams = await getTeamsForQuiz(quiz.id);
+    const answers = await getGeneratedAnswers(quiz.questions, teams);
+    const judgements = await getJudgements(teams);
+    resultContext?.setResults({
+      answers: answers.answers,
+      judgements: judgements,
+    });
+
+    navigate("/quiz/" + quiz.id + "/judgement");
   };
 
   //Fetching data from the API
@@ -352,8 +371,8 @@ export default function CreateQuiz() {
                         >
                           <button
                             className="btn bg-red-600"
-                            disabled={quiz.isActive}
-                            onClick={() => handleShowResults(quiz)}
+                            // disabled={quiz.isActive}
+                            onClick={() => handleFetchStoredResults(quiz)}
                           >
                             Visa Resultat
                           </button>
@@ -389,6 +408,16 @@ export default function CreateQuiz() {
                 )}
                 <h3 className="font-bold text-lg">Rättning av quiz</h3>
                 <p className="py-4">Click the button below to close</p>
+                <div className="modal-action"></div>
+              </div>
+            </dialog>
+
+            <dialog className="modal" ref={resultsDialogRef}>
+              <div className="modal-box w-11/12 max-w-5xl">
+                <h3 className="font-bold text-lg">
+                  Hämtar resultat från databasen...
+                </h3>
+                <Loader />
                 <div className="modal-action"></div>
               </div>
             </dialog>
