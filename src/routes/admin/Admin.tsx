@@ -3,7 +3,7 @@ import AdminMenu from "../../components/admin/AdminMenu";
 import Judges from "./judges/Judges";
 import CreateQuiz from "./quiz/CreateQuiz";
 import Questions from "./questions/questions";
-import { Question } from "../../utils/types";
+import { Question, QuestionTheme } from "../../utils/types";
 
 export default function Admin() {
   const { currentPath } = useParams();
@@ -28,20 +28,37 @@ export default function Admin() {
     },
   ]
 
+  const questionThemes: QuestionTheme[] = [
+    {
+      id: "1",
+      name: "string",
+    },
+    {
+      id: "2",
+      name: "stringg",
+    },
+    {
+      id: "3",
+      name: "stringg",
+    },
+  ]
+
+
   const questions: Question[] = [
     {
       id: "1",
-      type: "string;",
+      theme: questionThemes[0],
       content: "Vad är ditt namn?",
     },
     {
       id: "2",
-      type: "string;",
+      theme: questionThemes[1],
       content: "Vad är din ålder?",
     },
     {
       id: "3",
-      type: "string;",
+      theme: questionThemes[2],
+
       content: "Vad är din favoritfärg?",
     },
   ]
@@ -53,7 +70,7 @@ export default function Admin() {
 
         {currentPath === "quiz" && <CreateQuiz />}
         {currentPath === "judges" && <Judges judges={judges} />}
-        {currentPath === "questions" && <Questions questions={questions} />}
+        {currentPath === "questions" && <Questions questionsInput={questions} questionThemes={questionThemes} />}
         {currentPath === "settings" && (
           <h2 className="text-4xl font-bold">Inställningar</h2>
         )}
