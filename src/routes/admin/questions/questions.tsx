@@ -1,5 +1,5 @@
 import { Question } from "../../../utils/types";
-import { Judge } from "../../../utils/types";
+import { QuestionTheme } from "../../../utils/types";
 
 export default function Questions({ questions }: { questions: Question[] }) {
 
@@ -9,32 +9,42 @@ export default function Questions({ questions }: { questions: Question[] }) {
         alert("Feature not implemented");
     };
 
-    const judges: { id: number; name: string }[] = []; // Define the judges array
+    const questionthemes: { id: string; name: string }[] = []; // Define the judges array
+
 
     return (
         <>
-            <div>
-                <select
-                    className="select select-bordered w-full max-w-lg drop-shadow-lg"
-                    name="judge"
-                >
-                    <option disabled selected>
-                        Tema
-                    </option>
-                    {judges === undefined || judges.length === 0 ? (
-                        <option>Loading...</option>
-                    ) : (
-                        <>
-                            {judges.map((judge: { id: number; name: string }) => (
-                                <option key={judge.id}>{judge.name}</option>
-                            ))}
-                        </>
-                    )}
-                </select>
-            </div>
+
+
+            <div className="flex-container h-full w-full flex justify-center">
+
+                <h2 className="text-4xl font-bold">Välj Tema</h2>
+
+                <div className="flex justify-center">
+                    <select
+                        className="select select-bordered w-full max-w-lg drop-shadow-lg"
+                        name="questiontheme"
+                    >
+                        <option disabled selected>
+                            Tema
+                        </option>
+                        {questionthemes === undefined || questionthemes.length === 0 ? (
+                            <option>Loading...</option>
+                        ) : (
+                            <>
+                                {questionthemes.map((questiontheme: { id: string; name: string }) => (
+                                    <option key={questiontheme.id}>{questiontheme.name}</option>
+                                ))}
+                            </>
+                        )}
+                    </select>
+                </div>
+            </div >
+
+
             <section className="flex-container h-full w-full">
                 <div className="flex justify-between">
-                    <h2 className="text-4xl font-bold">Fråga</h2>
+                    <h2 className="text-4xl font-bold">Frågor</h2>
                     <button
                         className="btn btn-primary text-white text-xl"
                         onClick={handleAddQuestions}
