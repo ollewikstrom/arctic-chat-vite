@@ -45,12 +45,6 @@ export default function EndState({
   console.log(getWinningTeam());
   const winner = getWinningTeam();
 
-  const playVideo = () => {
-    setTimeout(() => {
-      videoRef.current?.play();
-    }, 1000);
-  };
-
   const playDrumRoll = () => {
     drumRollRef.current?.play();
     setShowDrumRoll(true);

@@ -3,7 +3,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TeamCard from "../../components/teams/TeamCard";
-import { Quiz, Team } from "../../utils/types";
+import { Team } from "../../utils/types";
 import { QuizContext } from "../../App";
 import { getTeamsForQuiz } from "../../services/api/apiService";
 import Loader from "../../components/Loader";

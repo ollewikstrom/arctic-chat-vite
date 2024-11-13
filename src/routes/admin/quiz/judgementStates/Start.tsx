@@ -1,4 +1,4 @@
-import { Quiz, Team } from "../../../../utils/types";
+import { Team } from "../../../../utils/types";
 
 export default function StartState({
   teams,
