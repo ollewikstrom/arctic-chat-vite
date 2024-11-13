@@ -14,7 +14,8 @@ export interface Judge {
 export interface Score {}
 
 export interface TeamScore {
-  team: string;
+  teamId: string;
+  teamName: string;
   scores: number[];
   teamColor: string;
 }

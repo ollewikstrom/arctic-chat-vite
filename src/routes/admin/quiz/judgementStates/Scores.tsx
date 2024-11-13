@@ -25,7 +25,7 @@ export default function Scores({
       ...Array.from({ length: amtQuestions }, (_, i) => `Question ${i + 1}`),
     ],
     datasets: teamScores.map((teamScore) => ({
-      label: teamScore.team,
+      label: teamScore.teamName,
       data: [...getCumulativeScores(teamScore.scores)],
       fill: false,
       borderColor: teamScore.teamColor,
@@ -57,7 +57,7 @@ export default function Scores({
       <h1 className="text-4xl font-josefin font-bold mb-8">
         Score Progression
       </h1>
-      <div className="w-full max-w-5xl aspect-w-16 aspect-h-9 chart-container">
+      <div className="w-full max-w-5xl aspect-w-16 aspect-h-9 canvas-container">
         <Line data={data} options={options} className="w-screen" />
       </div>
     </section>
