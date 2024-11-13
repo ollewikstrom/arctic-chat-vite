@@ -11,6 +11,14 @@ export interface Judge {
   prompt: string;
 }
 
+export interface Score {}
+
+export interface TeamScore {
+  team: string;
+  scores: number[];
+  teamColor: string;
+}
+
 export interface Judgement {
   id: string;
   team: string;
