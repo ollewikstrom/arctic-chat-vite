@@ -7,7 +7,7 @@ import WaitingRoom from "./routes/WaitingRoom";
 import Navbar from "./components/Navbar";
 import Experiment from "./routes/rooms/Experiment";
 import { createContext, useState } from "react";
-import { Answer, Judgement, Quiz, Team } from "./utils/types";
+import { Answer, Judgement, Quiz } from "./utils/types";
 import JudgementDay from "./routes/admin/quiz/JudgementDay";
 
 interface QuizContextType {

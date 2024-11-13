@@ -1,4 +1,4 @@
-import { useLocation, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import AdminMenu from "../../components/admin/AdminMenu";
 import Judges from "./judges/Judges";
 import CreateQuiz from "./quiz/CreateQuiz";
