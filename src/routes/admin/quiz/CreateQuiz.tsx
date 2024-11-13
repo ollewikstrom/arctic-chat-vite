@@ -394,7 +394,7 @@ export default function CreateQuiz() {
             </dialog>
           </section>
           <section className="col-span-1 w-full flex-container">
-            <h2 className="text-4xl font-bold text-white">
+            <h2 className="text-4xl font-bold text-black">
               Skapa ett nytt quiz
             </h2>
 
