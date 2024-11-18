@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Question } from "../../../utils/types";
 import { QuestionTheme } from "../../../utils/types";
 
@@ -11,26 +11,57 @@ import {
     getQuizes,
     getThemes,
     removeQuiz,
+    updateQuestion
 } from "../../../services/api/apiService";
 import { v4 as uuidv4 } from "uuid";
 
 
 
-export default function Questions({ questionsInput, questionThemes }: { questionsInput: Question[], questionThemes: QuestionTheme[] }) {
+export default function Questions() {
 
     // Setup usestate for mapping question theme to visible suestions
-    const [questions, setQuestions] = useState<Question[]>(questionsInput);
-    const [currentQuestionTheme, setCurrentQuestionTheme] = useState<QuestionTheme>();
+    //const [questions, setQuestions] = useState<Question[]>(questionsInput);
+
+    const defaultTheme: QuestionTheme = {
+        id: "",
+        name: "Välj ett tema",
+    };
+
+    const [currentQuestionTheme, setCurrentQuestionTheme] = useState<QuestionTheme>(defaultTheme);
     const [themeIsSet, setThemeIsSet] = useState<boolean>(false);
 
     //Setting up state for questions
-    const [numOfQuestions, setNumOfQuestions] = useState<number>(0);
     const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
     const [customQuestion, setCustomQuestion] = useState<string>("");
 
     // usestate for editing questions
     const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
     const [editingContent, setEditingContent] = useState<string>("");
+
+    const [themes, setThemes] = useState<QuestionTheme[]>([]);
+    const [questions, setQuestions] = useState<Question[]>([]);
+
+
+    const fetchThemes = async () => {
+        const questionThemes = await getThemes();
+        setThemes(questionThemes);
+    };
+
+    useEffect(() => {
+        fetchThemes();
+    }, []);
+
+    const fetchQuestions = async () => {
+        const selectedQuestions = await getAllQuestions(currentQuestionTheme);
+        setQuestions(selectedQuestions);
+    };
+
+    useEffect(() => {
+        console.log("Selected theme changed");
+        fetchQuestions();
+    }, [currentQuestionTheme]);
+
+
 
 
 
@@ -41,7 +72,6 @@ export default function Questions({ questionsInput, questionThemes }: { question
             content: customQuestion,
         };
 
-        setNumOfQuestions(selectedQuestions.length + 1);
         setCustomQuestion("");
         await addQuestion(newQuestion);
     };
@@ -60,18 +90,17 @@ export default function Questions({ questionsInput, questionThemes }: { question
     return (
         <>
 
-
             <div className="flex-container h-full w-full flex justify-center">
 
                 <h2 className="text-4xl font-bold">Välj Tema</h2>
 
                 <div className="flex justify-center">
                     <select
-                        className="select select-bordered w-full max-w-lg drop-shadow-lg"
+                        className="select select-bordered w-full max-w-lg drop-shadow-lg text-black"
                         name="questiontheme"
                         onChange={(e) => {
-                            const selectedQuestionTheme = questionThemes.find(
-                                (questiontheme) => questiontheme.name === e.target.value
+                            const selectedQuestionTheme: QuestionTheme = themes.find(
+                                (themes) => themes.name === e.target.value
                             );
                             setCurrentQuestionTheme(selectedQuestionTheme);
                             setThemeIsSet(true);
@@ -80,12 +109,12 @@ export default function Questions({ questionsInput, questionThemes }: { question
                         <option disabled selected>
                             Tema
                         </option>
-                        {questionThemes === undefined || questionThemes.length === 0 ? (
+                        {themes === undefined || themes.length === 0 ? (
                             <option>Loading...</option>
                         ) : (
                             <>
-                                {questionThemes.map((questiontheme: { id: string; name: string }) => (
-                                    <option key={questiontheme.id}>{questiontheme.name}</option>
+                                {themes.map((themess: { id: string; name: string }) => (
+                                    <option key={themess.id}>{themess.name}</option>
                                 ))}
                             </>
                         )}

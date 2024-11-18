@@ -1,9 +1,11 @@
 import { useLocation, useParams } from "react-router-dom";
+import { useContext, useEffect, useRef, useState } from "react";
 import AdminMenu from "../../components/admin/AdminMenu";
 import Judges from "./judges/Judges";
 import CreateQuiz from "./quiz/CreateQuiz";
 import Questions from "./questions/questions";
 import { Question, QuestionTheme } from "../../utils/types";
+
 
 export default function Admin() {
   const { currentPath } = useParams();
@@ -28,41 +30,6 @@ export default function Admin() {
     },
   ]
 
-  const questionThemes: QuestionTheme[] = [
-    {
-      id: "1",
-      name: "string",
-    },
-    {
-      id: "2",
-      name: "stringg",
-    },
-    {
-      id: "3",
-      name: "stringg",
-    },
-  ]
-
-
-  const questions: Question[] = [
-    {
-      id: "1",
-      theme: questionThemes[0],
-      content: "Vad är ditt namn?",
-    },
-    {
-      id: "2",
-      theme: questionThemes[1],
-      content: "Vad är din ålder?",
-    },
-    {
-      id: "3",
-      theme: questionThemes[2],
-
-      content: "Vad är din favoritfärg?",
-    },
-  ]
-
   return (
     <>
       <section className="h-full w-full p-6">
@@ -70,7 +37,7 @@ export default function Admin() {
 
         {currentPath === "quiz" && <CreateQuiz />}
         {currentPath === "judges" && <Judges judges={judges} />}
-        {currentPath === "questions" && <Questions questionsInput={questions} questionThemes={questionThemes} />}
+        {currentPath === "questions" && <Questions />}
         {currentPath === "settings" && (
           <h2 className="text-4xl font-bold">Inställningar</h2>
         )}
