@@ -29,6 +29,7 @@ export default function Questions() {
 
     const [currentQuestionTheme, setCurrentQuestionTheme] = useState<QuestionTheme>(defaultTheme);
     const [themeIsSet, setThemeIsSet] = useState<boolean>(false);
+    const [newAddedQuestion, setNewAddedQuestion] = useState<Question | null>(null);
 
     //Setting up state for questions
     const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
@@ -65,20 +66,23 @@ export default function Questions() {
 
 
 
+
+
     const handleAddQuestion = async () => {
         const newQuestion = {
             id: uuidv4(),
             theme: currentQuestionTheme,
             content: customQuestion,
         };
-
+        setQuestions((prev) => [...prev, newQuestion]);
         setCustomQuestion("");
         await addQuestion(newQuestion);
     };
 
-    const handleEditQuestion = (question: Question) => {
+    const handleEditQuestion = async (question: Question) => {
         setEditingQuestionId(question.id);
         setEditingContent(question.content);
+        await updateQuestion(editingQuestionId, editingContent);
     };
 
     const handleSaveEdit = (questionId: string) => {
@@ -138,7 +142,9 @@ export default function Questions() {
                             placeholder="Lägg till en ny fråga"
                             name="name"
                             autoComplete="off"
-                            onChange={(e) => setCustomQuestion(e.target.value)}
+                            onChange={(e) => {
+                                setCustomQuestion(e.target.value)
+                            }}
                             value={customQuestion}
                             disabled={!themeIsSet}
                         />
@@ -161,7 +167,7 @@ export default function Questions() {
                     </label>
                 </div>
                 <ul className="flex flex-wrap w-full justify-center items-center gap-6">
-                    {questions.filter((q: Question) => q.theme === currentQuestionTheme).map((Questionn: Question) => (
+                    {questions.map((Questionn: Question) => (
                         <li key={Questionn.id}>
                             <div className="card bg-white w-96 shadow-xl">
                                 <div className="card-body">
